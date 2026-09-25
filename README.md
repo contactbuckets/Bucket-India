@@ -1,15 +1,45 @@
-# Bucket India – Dropshipping MVP
+# Bucket India — Dropshipping Platform
 
-Seller + Vendor dashboard foundation using React/Vite and Supabase.
+React + Parcel + Supabase seller/vendor marketplace.
 
-## Setup
-1. Copy `.env.example` to `.env`.
-2. Add your Supabase URL and anon key.
-3. Run `npm install`.
-4. Run `npm run dev`.
+## Stack
+- React 19
+- Parcel 2
+- React Router
+- Supabase Auth + Postgres + RLS
 
-## Build
-`npm run build`
+## Local setup
+1. `cp .env.example .env`
+2. Put the Supabase project URL and publishable key in `.env`.
+3. `npm install`
+4. `npm run dev`
+5. `npm run build`
+
+Parcel reads `.env` variables and exposes them through `process.env.*`. Never put a Supabase service-role/secret key in this app.
+
+## Workspaces
+
+### Seller
+- Marketplace product discovery
+- Search/filter
+- Margin calculation (fixed or percentage)
+- Seller catalog
+- Shopify store records
+- Order view
+- Shipping configuration
+
+### Vendor
+- Product CRUD
+- Inventory and status
+- Seller-facing marketplace catalog
+- Fulfillment order queue
+- Order status updates
+- Shipping configuration
+
+## Integration boundary
+The dashboard is wired to the Supabase data model. A real Shopify OAuth/product/order sync requires a Shopify app client ID/secret and server-side callback/token handling. Those secrets must live in a Supabase Edge Function or another server-side environment, not in React. The current Store screen therefore manages the store connection record safely without pretending that an API token is available.
 
 ## Supabase
-The app expects the `profiles`, `vendors`, `products`, `listings`, `stores`, and `orders` tables from the Bucket India schema.
+Project: `qpcvesdlfqheigbzxbjr`
+
+Tables: `profiles`, `vendors`, `stores`, `products`, `listings`, `orders`, `shipping_configs`.
