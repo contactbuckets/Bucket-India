@@ -3,7 +3,7 @@ import {NavLink} from "react-router-dom";
 import AppShell,{Stat,Empty} from "../components/AppShell";
 import {useAuth} from "../context/AuthContext";
 import {supabase} from "../lib/supabase";
-import {ArrowRight,ArrowUpRight,ChartLine,SquaresFour,CheckCircle,CurrencyInr,Package,ShoppingCart,Storefront,Truck,WarningCircle,Wallet,UsersThree,Sparkle,Plus,UploadSimple,Stack} from "@phosphor-icons/react";
+import {ArrowRight,ArrowUpRight,ChartLine,SquaresFour,CheckCircle,CurrencyInr,Package,ShoppingCart,Storefront,Truck,WarningCircle,Wallet,Receipt,Gear,UsersThree,Sparkle,Plus,UploadSimple,Stack} from "@phosphor-icons/react";
 
 const money=n=>"₹"+Number(n||0).toLocaleString("en-IN",{maximumFractionDigits:0});
 const pct=n=>Math.round(Number(n||0)*100)/100;
