@@ -133,9 +133,94 @@ export function VendorCommandCenter(){
  </AppShell>
 }
 export function ProfitCalculator(){
- const [f,setF]=useState({cost:500,sell:999,shipping:80,cod:30,gateway:20,rto:60,other:10});const set=(k,v)=>setF({...f,[k]:Number(v)});const gross=f.sell-f.cost;const net=gross-f.shipping-f.cod-f.gateway-f.rto-f.other;const margin=f.sell?net/f.sell*100:0;
- return <AppShell role="seller" title="Profit Intelligence"><div className="calculator-grid"><Card><Head kicker="UNIT ECONOMICS" title="Profit calculator" text="Model the real contribution before you push a product."/><div className="calc-fields">{Object.entries({cost:"Vendor cost",sell:"Selling price",shipping:"Shipping cost",cod:"COD fee",gateway:"Payment fee",rto:"Expected RTO cost",other:"Other costs"}).map(([k,l])=><label key={k}>{l}<input type="number" value={f[k]} onChange={e=>set(k,e.target.value)}/></label>)}</div></Card><Card className="profit-result"><span className="section-kicker">ESTIMATED NET PROFIT</span><strong>{money(net)}</strong><div className="profit-ring"><b>{pct(margin)}%</b><span>net margin</span></div><div className="result-lines"><span>Gross profit <b>{money(gross)}</b></span><span>Cost load <b>{money(f.sell-net)}</b></span><span>Break-even price <b>{money(f.cost+f.shipping+f.cod+f.gateway+f.rto+f.other)}</b></span></div><p>Use this simulator before setting seller margin or pushing to Shopify.</p></Card></div></AppShell>
+ const [f,setF]=useState({cost:500,sell:999,shipping:80,cod:30,gateway:20,rto:60,other:10,targetMargin:25});
+ const [products,setProducts]=useState([]);
+ const [selectedProduct,setSelectedProduct]=useState("");
+ useEffect(()=>{supabase.from("products").select("id,title,name,cost_price").eq("status","active").limit(20).then(({data})=>setProducts(data||[]))},[]);
+ const set=(k,v)=>setF(x=>({...x,[k]:Math.max(0,Number(v)||0)}));
+ const gross=f.sell-f.cost;
+ const operatingCosts=f.shipping+f.cod+f.gateway+f.rto+f.other;
+ const net=gross-operatingCosts;
+ const margin=f.sell?net/f.sell*100:0;
+ const breakEven=f.cost+operatingCosts;
+ const target=Math.min(60,Math.max(5,f.targetMargin));
+ const targetPrice=(1-target/100)>0?breakEven/(1-target/100):breakEven;
+ const adRoom=Math.max(0,net);
+ const marginState=margin<0?"Loss":margin<10?"Thin margin":margin<20?"Watch margin":"Healthy margin";
+ const costRows=[
+  ["Vendor cost",f.cost,"vendor"],
+  ["Shipping",f.shipping,"shipping"],
+  ["COD fee",f.cod,"cod"],
+  ["Payment fee",f.gateway,"gateway"],
+  ["RTO cost",f.rto,"rto"],
+  ["Other costs",f.other,"other"]
+ ];
+ const chooseProduct=id=>{setSelectedProduct(id);const p=products.find(x=>x.id===id);if(p)set("cost",p.cost_price)};
+ return <AppShell role="seller" title="Profit Intelligence">
+  <section className="profit-hero">
+   <div>
+    <span className="hero-kicker">BUCKET INDIA · PROFIT INTELLIGENCE</span>
+    <h2>Know your profit <span>before you sell.</span></h2>
+    <p>Enter the real costs behind one order. Bucket India shows what you keep, where the money goes and what price you need to hit your target margin.</p>
+    <div className="profit-hero-actions">
+     <NavLink className="btn primary" to="/seller/products"><Package size={17}/> Discover products <ArrowRight size={15}/></NavLink>
+     <button className="btn glass" type="button" onClick={()=>{setF({cost:500,sell:999,shipping:80,cod:30,gateway:20,rto:60,other:10,targetMargin:25});setSelectedProduct("")}}>Reset example</button>
+    </div>
+   </div>
+   <div className="profit-hero-note"><Sparkle size={19}/><b>Beginner rule</b><span>Never treat selling price as profit. Count every cost first.</span></div>
+  </section>
+
+  <div className="profit-workspace">
+   <Card className="profit-input-card">
+    <Head kicker="STEP 1 · ENTER YOUR NUMBERS" title="Build your unit economics" text="You only need a few numbers. We calculate the rest instantly."/>
+    {products.length>0&&<label className="profit-product-picker"><span>Start from a marketplace product <small>optional</small></span><select value={selectedProduct} onChange={e=>chooseProduct(e.target.value)}><option value="">Choose a product</option>{products.map(p=><option value={p.id} key={p.id}>{p.title||p.name||"Marketplace product"} · {money(p.cost_price)}</option>)}</select></label>}
+    <div className="profit-field-grid">
+     <label className="profit-field featured"><span>Vendor cost <small>What you pay</small></span><div><b>₹</b><input type="number" min="0" value={f.cost} onChange={e=>set("cost",e.target.value)}/></div></label>
+     <label className="profit-field featured"><span>Selling price <small>What customer pays</small></span><div><b>₹</b><input type="number" min="0" value={f.sell} onChange={e=>set("sell",e.target.value)}/></div></label>
+     <label className="profit-field"><span>Shipping cost <small>Forward delivery</small></span><div><b>₹</b><input type="number" min="0" value={f.shipping} onChange={e=>set("shipping",e.target.value)}/></div></label>
+     <label className="profit-field"><span>COD fee <small>COD orders</small></span><div><b>₹</b><input type="number" min="0" value={f.cod} onChange={e=>set("cod",e.target.value)}/></div></label>
+     <label className="profit-field"><span>Payment fee <small>Gateway / prepaid</small></span><div><b>₹</b><input type="number" min="0" value={f.gateway} onChange={e=>set("gateway",e.target.value)}/></div></label>
+     <label className="profit-field"><span>RTO cost <small>Expected loss / order</small></span><div><b>₹</b><input type="number" min="0" value={f.rto} onChange={e=>set("rto",e.target.value)}/></div></label>
+     <label className="profit-field"><span>Other costs <small>Packaging, tools, etc.</small></span><div><b>₹</b><input type="number" min="0" value={f.other} onChange={e=>set("other",e.target.value)}/></div></label>
+     <label className="profit-field target-field"><span>Target margin <small>For your pricing goal</small></span><div><input type="number" min="5" max="60" value={f.targetMargin} onChange={e=>set("targetMargin",e.target.value)}/><b>%</b></div></label>
+    </div>
+   </Card>
+
+   <Card className={"profit-result-card "+(net<0?"loss":"")}>
+    <div className="profit-result-top"><div><span className="section-kicker">WHAT YOU KEEP</span><small>{marginState}</small></div><div className="profit-status-dot"/></div>
+    <strong className="profit-big-number">{money(net)}</strong>
+    <span className="profit-big-label">estimated net profit per order</span>
+    <div className="profit-margin-meter"><i style={{width:Math.min(100,Math.max(3,margin))+"%"}}/><span><b>{pct(margin)}%</b> net margin</span></div>
+    <div className="profit-result-grid">
+     <div><span>Gross profit</span><b>{money(gross)}</b></div>
+     <div><span>Total costs</span><b>{money(f.cost+operatingCosts)}</b></div>
+     <div><span>Break-even price</span><b>{money(breakEven)}</b></div>
+     <div><span>Room for ads</span><b>{money(adRoom)}</b></div>
+    </div>
+    <div className="profit-result-callout"><TargetIcon/><div><b>Target {target}% margin</b><span>Price this product around <strong>{money(targetPrice)}</strong> to reach your target.</span></div></div>
+   </Card>
+  </div>
+
+  <div className="profit-lower-grid">
+   <Card>
+    <Head kicker="WHERE THE MONEY GOES" title="Cost breakdown" text="See exactly what is eating into your selling price."/>
+    <div className="profit-breakdown">{costRows.map(([label,value,key])=>{const share=f.sell?Math.min(100,value/f.sell*100):0;return <div className="profit-break-row" key={key}><div><span>{label}</span><b>{money(value)}</b></div><div className="profit-break-track"><i className={"break-"+key} style={{width:share+"%"}}/></div></div>})}</div>
+   </Card>
+   <Card className="profit-learn-card">
+    <Head kicker="FOR BEGINNERS" title="How to use this number"/>
+    <div className="profit-learn-list">
+     <div><span>01</span><div><b>Start with vendor cost</b><p>Use the actual product cost, not the marketplace selling price.</p></div></div>
+     <div><span>02</span><div><b>Add delivery + payment costs</b><p>These are real deductions from every successful order.</p></div></div>
+     <div><span>03</span><div><b>Account for RTO risk</b><p>A small-looking RTO cost can erase a thin margin quickly.</p></div></div>
+     <div><span>04</span><div><b>Then decide your price</b><p>Use the target-margin price as your starting point before launch.</p></div></div>
+    </div>
+   </Card>
+  </div>
+  <div className="profit-bottom-strip"><div><ChartLine size={18}/><div><b>Ready to launch?</b><span>Take the product with healthy unit economics to your store.</span></div></div><NavLink className="btn primary" to="/seller/products">Continue to products <ArrowRight size={15}/></NavLink></div>
+ </AppShell>
 }
+
+function TargetIcon(){return <span className="profit-target-icon"><CurrencyInr size={16}/></span>}
 
 export function KycCenter({role="seller"}){const {session}=useAuth();const [f,setF]=useState({entity_type:"business",legal_name:"",business_name:"",gstin:"",phone:"",address:"",pincode:""});const [row,setRow]=useState(null),[msg,setMsg]=useState("");useEffect(()=>{if(session?.user?.id)supabase.from("kyc_profiles").select("*").eq("user_id",session.user.id).maybeSingle().then(({data})=>{if(data){setRow(data);setF(data)}})},[session?.user?.id]);async function save(e){e.preventDefault();const payload={...f,user_id:session.user.id,completion:Math.min(100,[f.legal_name,f.business_name,f.gstin,f.phone,f.address,f.pincode].filter(Boolean).length/6*100),status:"submitted"};const q=row?supabase.from("kyc_profiles").update(payload).eq("user_id",session.user.id):supabase.from("kyc_profiles").insert(payload);const {error}=await q;setMsg(error?error.message:"KYC submitted for review.");if(!error)setRow({...payload})}return <AppShell role={role} title="KYC & Verification"><div className="kyc-head"><div><span className="section-kicker">TRUST CENTER</span><h2>Get your {role} account verified.</h2><p>Complete business and payout details once; use the same verified identity across operations.</p></div><div className="kyc-score"><b>{Math.round(row?.completion||0)}%</b><span>complete</span></div></div><Card><form className="form-stack" onSubmit={save}><div className="form-row"><label>Legal name<input value={f.legal_name||""} onChange={e=>setF({...f,legal_name:e.target.value})}/></label><label>Business / store name<input value={f.business_name||""} onChange={e=>setF({...f,business_name:e.target.value})}/></label></div><div className="form-row"><label>GSTIN<input value={f.gstin||""} onChange={e=>setF({...f,gstin:e.target.value})}/></label><label>Phone<input value={f.phone||""} onChange={e=>setF({...f,phone:e.target.value})}/></label></div><label>Business address<textarea rows="3" value={f.address||""} onChange={e=>setF({...f,address:e.target.value})}/></label><label>Pincode<input value={f.pincode||""} onChange={e=>setF({...f,pincode:e.target.value})}/></label><div className="kyc-docs"><span>✓ Identity details</span><span>✓ Business details</span><span>○ PAN document</span><span>○ Bank proof</span></div><button className="btn primary">Save & submit KYC</button>{msg&&<div className="alert success">{msg}</div>}</form></Card></AppShell>
 }
