@@ -54,7 +54,169 @@ export function ShipmentCenter({role="seller"}){
  const tabs=[["pickups","Pickups"],["in_transit","In-Transit"],["out_for_delivery","Out for delivery"],["rto","RTO"],["cancelled","Cancelled"],["all","All"]];
  return <AppShell role={role} title="Shipments"><section className="shipments-hero"><div><span className="section-kicker">DELIVERY CONTROL TOWER</span><h2>Every parcel. <em>Every mile.</em></h2><p>Track seller-confirmed orders from pickup through delivery, NDR and RTO. Vendor updates are mirrored here so the seller always sees the live delivery journey.</p></div><div className="shipments-hero-orbit"><Truck size={30}/><span>LIVE<br/>JOURNEY</span></div></section><div className="shipments-kpis">{[["total","Total shipments",stats.total,"All journeys"],["pickups","Pickups",stats.pickups,"Ready / booked"],["inTransit","In transit",stats.inTransit,"Courier movement"],["out","Out for delivery",stats.out,"Final-mile"],["delivered","Delivered",stats.delivered,"Completed"],["rto","RTO",stats.rto,"Returning"]].map(([key,label,value,hint])=><div className={"shipment-kpi "+key} key={key}><span>{label}</span><strong>{value}</strong><small>{hint}</small></div>)}</div><section className="panel shipments-panel"><div className="shipments-filter-panel"><div className="shipments-search"><MagnifyingGlass size={16}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search AWB, Shopify order, Order ID, customer, mobile"/></div><label className="shipments-date"><CalendarBlank size={15}/><span>FROM</span><input type="date" value={filters.from} onChange={e=>setFilters(x=>({...x,from:e.target.value}))} onClick={e=>e.currentTarget.showPicker?.()}/></label><label className="shipments-date"><span>TO</span><input type="date" value={filters.to} onChange={e=>setFilters(x=>({...x,to:e.target.value}))} onClick={e=>e.currentTarget.showPicker?.()}/></label><div className="shipment-select"><span>PAYMENT</span><select value={filters.payment} onChange={e=>setFilters(x=>({...x,payment:e.target.value}))}><option value="all">All payments</option><option value="cod">COD</option><option value="prepaid">Prepaid</option></select></div><div className="shipment-select"><span>STORE</span><select value={filters.store} onChange={e=>setFilters(x=>({...x,store:e.target.value}))}><option value="all">All stores</option>{stores.map(s=><option value={s.id} key={s.id}>{s.store_name||s.shop_domain||"Shopify store"}</option>)}</select></div><button className="shipments-reset" onClick={reset}>Reset</button></div><div className="shipments-tabs">{tabs.map(([value,label])=><button key={value} className={tab===value?"active "+value:""} onClick={()=>setTab(value)}>{label}<b>{value==="all"?stats.total:value==="pickups"?stats.pickups:value==="in_transit"?stats.inTransit:value==="out_for_delivery"?stats.out:value==="rto"?stats.rto:stats.cancelled}</b></button>)}</div><div className="shipments-toolbar"><div><b>{rows.length}</b> shipments <span>{selected.length?selected.length+" selected":""}</span></div><div className="shipments-export"><button className="btn compact" onClick={exportCsv}><DownloadSimple size={15}/> Export CSV</button><button className="btn compact" onClick={()=>window.print()}><DownloadSimple size={15}/> Print / Export</button></div></div><div className="shipments-table-shell"><table className="shipments-table"><thead><tr><th className="check-col"><input type="checkbox" checked={rows.length>0&&rows.every(s=>selected.includes(s.id))} onChange={e=>setSelected(e.target.checked?[...new Set([...selected,...rows.map(s=>s.id)])]:selected.filter(id=>!rows.some(s=>s.id===id)))}/></th><th>Order date</th><th>Order confirm date</th><th>AWB Number</th><th>Pickup date</th><th>Shopify order ID</th><th>Order ID</th><th>Price</th><th>Margin</th><th>Payment Mode</th><th>Customer details</th><th>Name</th><th>Address</th><th>Number</th><th>Product details</th><th>Store Name</th><th>Courier</th><th>Journey status</th>{role==="vendor"&&<th>Action</th>}</tr></thead><tbody>{rows.map(s=>{const o=s.order||{},selectedRow=selected.includes(s.id);return <tr key={s.id}><td><input type="checkbox" checked={selectedRow} onChange={e=>setSelected(e.target.checked?[...selected,s.id]:selected.filter(id=>id!==s.id))}/></td><td><b>{new Date(o.created_at).toLocaleDateString("en-IN")}</b><small>{new Date(o.created_at).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})}</small></td><td>{o.confirmed_at?<><b>{new Date(o.confirmed_at).toLocaleDateString("en-IN")}</b><small>{new Date(o.confirmed_at).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})}</small></>:"—"}</td><td><b className="shipment-awb">{s.awb||"Pending"}</b><small>{s.courier||"Courier pending"}</small></td><td>{(s.pickup_at||s.created_at)?new Date(s.pickup_at||s.created_at).toLocaleDateString("en-IN"):"—"}</td><td><b className="shipment-shopify">#{o.external_order_id||"—"}</b></td><td><b>{o.id.slice(0,10)}…</b></td><td><strong>{money(o.amount)}</strong><small>{o.quantity||1} item{o.quantity===1?"":"s"}</small></td><td><strong className="shipment-margin">{money(o.seller_margin)}</strong></td><td><span className={"payment-chip "+(o.payment_method||"cod")}>{String(o.payment_method||"cod").toUpperCase()}</span></td><td><span className="customer-badge">{o.customer_name||"Customer"}</span></td><td>{o.customer_name||"—"}</td><td><span className="shipment-address">{address(o)}</span></td><td>{o.customer_phone||"—"}</td><td><span className="shipment-product">{productLabel(o)}</span></td><td><span className="store-chip">{s.store?.store_name||s.store?.shop_domain||"Shopify store"}</span></td><td>{s.courier||"—"}</td><td><span className={statusClass(s.status)}>{stageLabel(s)}</span></td>{role==="vendor"&&<td><div className="shipment-actions-inline">{s.status==="ready"&&<button className="btn primary compact" onClick={()=>updateShipment(s,"booked")}>Book pickup</button>}{s.status==="booked"&&<button className="btn primary compact" onClick={()=>updateShipment(s,"shipped")}>Mark shipped</button>}{s.status==="shipped"&&<button className="btn primary compact" onClick={()=>updateShipment(s,"out_for_delivery")}>Out for delivery</button>}{s.status==="out_for_delivery"&&<button className="btn primary compact" onClick={()=>updateShipment(s,"delivered")}>Delivered</button>}{["shipped","out_for_delivery"].includes(s.status)&&<button className="btn danger compact" onClick={()=>updateShipment(s,"rto")}>RTO</button>}</div></td>} </tr>})}</tbody></table></div>{!rows.length&&<Empty title={d.loading?"Loading shipments…":"No matching shipments"} text="Seller-confirmed orders will appear here as the vendor moves them through the delivery journey."/>}</section></AppShell>
 }
-export function NdrCenter({role="seller"}){const d=useOrders(role),cases=d.rows.flatMap(o=>(o.ndr_cases||[]).map(n=>({...n,order:o})));async function addCase(o){if(role!=="vendor")return;const {error}=await supabase.from("ndr_cases").insert({order_id:o.id,shipment_id:o.shipments?.[0]?.id||null,reason:"Delivery attempt failed",next_action:"Contact customer and re-attempt"});if(error)alert(error.message);else{await supabase.from("shipments").update({status:"ndr",updated_at:new Date().toISOString()}).eq("order_id",o.id);await supabase.from("orders").update({status:"ndr"}).eq("id",o.id);d.load()}}async function resolve(n){const {error}=await supabase.from("ndr_cases").update({status:"resolved",resolved_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",n.id);if(error)alert(error.message);else d.load()}return <AppShell role={role} title="NDR"><div className="stats ops-stats"><Stat label="Open NDR" value={cases.filter(x=>x.status==="open").length}/><Stat label="Actioned" value={cases.filter(x=>x.status==="actioned").length}/><Stat label="Resolved" value={cases.filter(x=>x.status==="resolved").length}/><Stat label="Failed" value={cases.filter(x=>x.status==="failed").length}/></div><section className="panel"><div className="panel-head"><div><span className="section-kicker">NON-DELIVERY RESPONSE</span><h2>Recover deliveries before RTO.</h2><p>Every failed attempt becomes an operational case shared with the seller.</p></div></div><div className="case-grid">{cases.map(n=><article className="case-card" key={n.id}><span className={statusClass(n.status)}>{n.status}</span><h3>#{n.order.external_order_id||n.order.id.slice(0,8)}</h3><p>{n.reason||"Delivery attempt failed"}</p><small>{n.next_action||"Follow up with customer"}</small>{role==="vendor"&&n.status!=="resolved"&&<button className="btn primary compact" onClick={()=>resolve(n)}>Resolve case</button>}</article>)}{role==="vendor"&&d.rows.filter(o=>["shipped","out_for_delivery","ndr"].includes(o.status)&&!(o.ndr_cases||[]).some(n=>n.status==="open")).map(o=><article className="case-card create" key={o.id}><span>ATTENTION</span><h3>#{o.external_order_id||o.id.slice(0,8)}</h3><p>Mark a failed delivery attempt and start NDR follow-up.</p><button className="btn primary compact" onClick={()=>addCase(o)}>Create NDR case</button></article>)}</div>{!cases.length&&role==="seller"&&<Empty title="No NDR cases" text="Vendor delivery exceptions will appear here."/>}</section></AppShell>}
+export function NdrCenter({role="seller"}){
+ const d=useOrders(role),
+   [tab,setTab]=useState("action"),
+   [search,setSearch]=useState(""),
+   [stores,setStores]=useState([]),
+   [filters,setFilters]=useState({from:"",to:"",payment:"all",store:"all"});
+
+ useEffect(()=>{
+   const ids=[...new Set(d.rows.map(o=>o.store_id||o.listings?.store_id).filter(Boolean))];
+   if(!ids.length){setStores([]);return}
+   supabase.from("stores").select("*").in("id",ids).then(({data})=>setStores(data||[]));
+ },[d.rows]);
+
+ const storeMap=useMemo(()=>Object.fromEntries(stores.map(s=>[s.id,s])),[stores]);
+
+ const records=useMemo(()=>{
+   return d.rows.flatMap(o=>{
+     const shipment=o.shipments?.[0]||{};
+     const cases=o.ndr_cases||[];
+     const base={order:o,shipment,store:storeMap[o.store_id||o.listings?.store_id]||null};
+     if(cases.length)return cases.map(n=>({...base,case:n,kind:"ndr"}));
+     if(["ndr","rto"].includes(shipment.status)||o.status==="rto")return [{...base,case:null,kind:shipment.status==="rto"||o.status==="rto"?"rto":"ndr"}];
+     return [];
+   });
+ },[d.rows,storeMap]);
+
+ const getStoreName=r=>r.store?.store_name||r.store?.name||r.store?.shop_domain||r.order?.store_name||r.order?.shop_domain||"Shopify store";
+ const payment=o=>String(o?.payment_method||"cod").toLowerCase().includes("pre")?"prepaid":"cod";
+ const firstNdr=r=>r.case?.created_at||r.order?.ndr_at||r.shipment?.ndr_at||null;
+ const remark=r=>r.case?.remark||r.case?.reason||r.shipment?.ndr_remark||r.shipment?.ndr_reason||"Delivery attempt failed";
+ const state=r=>{
+   const s=r.shipment?.status||r.order?.status;
+   if(s==="rto"||r.kind==="rto")return "rto";
+   if(s==="delivered")return "delivered";
+   if(r.case?.status==="resolved")return "delivered";
+   if(r.case?.status==="actioned")return "actioned";
+   return "action";
+ };
+ const ageing=r=>{const dt=firstNdr(r);return dt?Math.max(0,Math.floor((Date.now()-new Date(dt).getTime())/86400000)):0};
+
+ const filtered=useMemo(()=>records.filter(r=>{
+   const o=r.order||{},s=r.shipment||{},st=state(r),sid=o.store_id||o.listings?.store_id;
+   const date=(firstNdr(r)||o.created_at||"").slice(0,10);
+   const q=[o.external_order_id,o.id,s.awb,s.courier,s.shipping_partner,o.customer_name,o.customer_phone,getStoreName(r),remark(r)].filter(Boolean).join(" ").toLowerCase();
+   const tabOk=tab==="all"||tab==="action"?(tab==="all"||["action","actioned"].includes(st)):tab==="delivered"?st==="delivered":tab==="rto"?st==="rto":true;
+   return tabOk&&(!search||q.includes(search.toLowerCase()))&&(!filters.from||date>=filters.from)&&(!filters.to||date<=filters.to)&&(filters.payment==="all"||payment(o)===filters.payment)&&(filters.store==="all"||sid===filters.store);
+ }),[records,tab,search,filters]);
+
+ const stats=useMemo(()=>({
+   total:records.length,
+   action:records.filter(r=>["action","actioned"].includes(state(r))).length,
+   delivered:records.filter(r=>state(r)==="delivered").length,
+   rto:records.filter(r=>state(r)==="rto").length,
+   openNdr:records.filter(r=>state(r)==="action").length,
+   aged:records.filter(r=>state(r)==="action"&&ageing(r)>=3).length
+ }),[records]);
+
+ const reset=()=>{setSearch("");setFilters({from:"",to:"",payment:"all",store:"all"});};
+
+ async function actionRecord(r,next){
+   const now=new Date().toISOString(),o=r.order,s=r.shipment,n=r.case;
+   if(!o?.id)return;
+   if(!s?.id){alert("This NDR/RTO record has no linked shipment.");return}
+   const patch={updated_at:now,status:next};
+   if(next==="out_for_delivery")patch.last_attempt_at=now;
+   if(next==="rto")patch.rto_at=now;
+   const {error}=await supabase.from("shipments").update(patch).eq("id",s.id);
+   if(error){alert(error.message);return}
+   if(n?.id){
+     await supabase.from("ndr_cases").update({
+       status:next==="rto"?"resolved":"actioned",
+       next_action:next==="rto"?"Return to origin":"Reattempt delivery",
+       resolved_at:next==="rto"?now:null,
+       updated_at:now
+     }).eq("id",n.id);
+   }
+   const orderPatch={updated_at:now,last_event_at:now};
+   if(next==="rto"){orderPatch.status="rto";orderPatch.rto_at=now}
+   if(next==="out_for_delivery"){orderPatch.status="shipped"}
+   await supabase.from("orders").update(orderPatch).eq("id",o.id);
+   d.load();
+ }
+
+ function exportCsv(){
+   const head=["Order date","AWB Number","Pickup date","Shopify order ID","Order ID","Price","Margin","Payment Mode","Customer Name","Address","Number","Product Details","Store Name","Shipping Partner","First NDR Date","NDR Remark","Ageing","Status"];
+   const body=filtered.map(r=>{
+     const o=r.order||{},s=r.shipment||{},a=o.shipping_address||{},p=o.listings?.products||{};
+     return[
+       o.created_at||"",s.awb||"",s.pickup_at||"",o.external_order_id||"",o.id,o.amount||0,o.seller_margin||0,payment(o).toUpperCase(),
+       o.customer_name||"",[a.address1||a.address||a.street,a.address2,a.city,a.state,a.pincode||a.zip].filter(Boolean).join(", "),
+       o.customer_phone||"",[p.title,p.sku,o.quantity?("Qty "+o.quantity):""].filter(Boolean).join(" • "),getStoreName(r),
+       s.shipping_partner||s.courier||"",firstNdr(r)||"",remark(r),ageing(r)+" days",state(r)
+     ];
+   });
+   const csv=[head,...body].map(row=>row.map(v=>"\""+String(v).replaceAll("\"","\"\"")+"\"").join(",")).join("\n");
+   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="bucket-india-ndr-rto.csv";a.click();URL.revokeObjectURL(a.href);
+ }
+
+ const tabs=[["action","Action Required",stats.action],["delivered","Delivered",stats.delivered],["rto","RTO",stats.rto],["all","All",stats.total]];
+
+ return <AppShell role={role} title="NDR">
+  <section className="ndr-hero">
+   <div><span className="section-kicker">NDR & RTO CONTROL TOWER</span><h2>Recover every parcel before <em>RTO.</em></h2><p>NDR and RTO status is mirrored from the shipping partner against the seller order, AWB and customer record.</p></div>
+   <div className="ndr-hero-mark">NDR<br/><small>LIVE</small></div>
+  </section>
+
+  <div className="ndr-kpis">
+   {[["total","Total NDR / RTO",stats.total,"Combined exception pool"],["open","Action required",stats.openNdr,"Needs reattempt / decision"],["aged","Aged 3+ days",stats.aged,"Priority follow-up"],["delivered","Delivered",stats.delivered,"Recovered after exception"],["rto","RTO",stats.rto,"Returning to origin"]].map(([k,l,v,h])=><div className={"ndr-kpi "+k} key={k}><span>{l}</span><strong>{v}</strong><small>{h}</small></div>)}
+  </div>
+
+  <section className="panel ndr-panel">
+   <div className="ndr-filter-panel">
+    <div className="ndr-search"><Funnel size={16}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search AWB, Shopify order, Order ID, customer, mobile"/></div>
+    <label className="ndr-date"><CalendarBlank size={15}/><span>FROM</span><input type="date" value={filters.from} onChange={e=>setFilters(x=>({...x,from:e.target.value}))} onClick={e=>e.currentTarget.showPicker?.()}/></label>
+    <label className="ndr-date"><span>TO</span><input type="date" value={filters.to} onChange={e=>setFilters(x=>({...x,to:e.target.value}))} onClick={e=>e.currentTarget.showPicker?.()}/></label>
+    <div className="ndr-select"><span>PAYMENT</span><select value={filters.payment} onChange={e=>setFilters(x=>({...x,payment:e.target.value}))}><option value="all">All payments</option><option value="cod">COD</option><option value="prepaid">Prepaid</option></select></div>
+    <div className="ndr-select"><span>STORE</span><select value={filters.store} onChange={e=>setFilters(x=>({...x,store:e.target.value}))}><option value="all">All stores</option>{stores.map(s=><option key={s.id} value={s.id}>{s.store_name||s.name||s.shop_domain||"Shopify store"}</option>)}</select></div>
+    <button className="ndr-reset" onClick={reset}>Reset</button>
+   </div>
+
+   <div className="ndr-tabs">{tabs.map(([v,l,c])=><button key={v} className={tab===v?"active "+v:""} onClick={()=>setTab(v)}>{l}<b>{c}</b></button>)}</div>
+
+   <div className="ndr-toolbar"><div><b>{filtered.length}</b> records <span>Showing combined NDR and RTO shipment exceptions</span></div><div><button className="btn compact" onClick={exportCsv}><DownloadSimple size={15}/> Export CSV</button><button className="btn compact" onClick={()=>window.print()}><DownloadSimple size={15}/> Print / Export</button></div></div>
+
+   <div className="ndr-table-shell">
+    <table className="ndr-table">
+     <thead><tr>
+      <th>✓</th><th>Order date</th><th>AWB Number</th><th>Pickup date</th><th>Shopify order ID</th><th>Order ID</th><th>Price</th><th>Margin</th><th>Payment Mode</th><th>Customer details</th><th>Name</th><th>Address</th><th>Number</th><th>Product Details</th><th>Store Name</th><th>Shipping Partner</th><th>First NDR Date</th><th>NDR Remark</th><th>Ageing</th><th>Status</th><th>Action</th>
+     </tr></thead>
+     <tbody>
+      {filtered.map((r,i)=>{
+       const o=r.order||{},s=r.shipment||{},st=state(r),a=o.shipping_address||{},p=o.listings?.products||{};
+       return <tr key={(r.case?.id||s.id||o.id)+i}>
+        <td><input type="checkbox"/></td>
+        <td><b>{o.created_at?new Date(o.created_at).toLocaleDateString("en-IN"):"—"}</b><small>{o.created_at?new Date(o.created_at).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"}):""}</small></td>
+        <td><b className="ndr-awb">{s.awb||"Pending"}</b></td>
+        <td>{s.pickup_at?new Date(s.pickup_at).toLocaleDateString("en-IN"):"—"}</td>
+        <td><b>#{o.external_order_id||"—"}</b></td>
+        <td><b>{o.id?.slice(0,10)}…</b></td>
+        <td><strong>{money(o.amount)}</strong></td>
+        <td><strong className="ndr-margin">{money(o.seller_margin)}</strong></td>
+        <td><span className={"payment-chip "+payment(o)}>{payment(o).toUpperCase()}</span></td>
+        <td><span className="customer-badge">{o.customer_name||"Customer"}</span></td>
+        <td>{o.customer_name||"—"}</td>
+        <td><span className="ndr-address">{[a.address1||a.address,a.address2,a.city,a.state,a.pincode||a.zip].filter(Boolean).join(", ")||"Address available"}</span></td>
+        <td>{o.customer_phone||"—"}</td>
+        <td><span className="ndr-product">{[p.title,p.sku,o.quantity?("Qty "+o.quantity):""].filter(Boolean).join(" • ")||"Product unavailable"}</span></td>
+        <td><span className="store-chip">{getStoreName(r)}</span></td>
+        <td>{s.shipping_partner||s.courier||"—"}</td>
+        <td>{firstNdr(r)?new Date(firstNdr(r)).toLocaleDateString("en-IN"):"—"}</td>
+        <td><span className="ndr-remark">{remark(r)}</span></td>
+        <td><span className={ageing(r)>=3?"ageing-risk":"ageing"}>{ageing(r)}d</span></td>
+        <td><span className={statusClass(st)}>{st==="action"?"Action required":st==="actioned"?"Actioned":st==="delivered"?"Delivered":"RTO"}</span></td>
+        <td><div className="ndr-actions">{["action","actioned"].includes(st)&&<><button className="btn primary compact" onClick={()=>actionRecord(r,"out_for_delivery")}>Reattempt</button><button className="btn danger compact" onClick={()=>actionRecord(r,"rto")}>RTO</button></>}{st==="delivered"&&<span className="ndr-done">Recovered</span>}{st==="rto"&&<span className="ndr-done">Returning</span>}</div></td>
+       </tr>
+      })}
+     </tbody>
+    </table>
+   </div>
+   {!filtered.length&&<Empty title={d.loading?"Loading NDR & RTO…":"No matching NDR / RTO parcels"} text="Shipping-partner NDR and RTO events will appear here against the linked order and AWB."/>}
+  </section>
+ </AppShell>
+}
 
 export function RtoCenter({role="seller"}){const d=useOrders(role);const rows=d.rows.filter(o=>o.status==="rto");return <AppShell role={role} title="RTO Intelligence"><section className="ops-hero risk"><div><span className="section-kicker">RETURN TO ORIGIN</span><h2>Turn RTO into <span>actionable data.</span></h2><p>See every returning parcel, its value, margin impact and courier trail in one place.</p></div><div className="ops-orbit">RTO</div></section><div className="stats ops-stats"><Stat label="RTO parcels" value={rows.length}/><Stat label="RTO GMV" value={money(rows.reduce((a,o)=>a+Number(o.amount||0),0))}/><Stat label="Margin at risk" value={money(rows.reduce((a,o)=>a+Number(o.seller_margin||0),0))}/></div><section className="panel"><div className="table-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Amount</th><th>Margin impact</th><th>Courier</th><th>AWB</th><th>RTO date</th></tr></thead><tbody>{rows.map(o=><tr key={o.id}><td>#{o.external_order_id||o.id.slice(0,8)}</td><td>{o.customer_name||"—"}</td><td>{money(o.amount)}</td><td className="danger-text">{money(o.seller_margin)}</td><td>{o.shipments?.[0]?.courier||"—"}</td><td>{o.shipments?.[0]?.awb||o.awb||"—"}</td><td>{o.rto_at?new Date(o.rto_at).toLocaleDateString("en-IN"):"—"}</td></tr>)}</tbody></table></div>{!rows.length&&<Empty title="No RTO parcels" text="RTO orders will automatically appear here after vendor updates the shipment."/>}</section></AppShell>}
 
