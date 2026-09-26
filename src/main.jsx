@@ -5,6 +5,7 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import SellerModern from "./pages/SellerModern";
+import {SellerCommandCenter,VendorCommandCenter,ProfitCalculator,KycCenter,WalletCenter,ReportsCenter,VendorImport,FeaturePage} from "./pages/GrowthOS";
 import {
   SellerHome,
   SellerProducts,
@@ -33,7 +34,7 @@ function App() {
         path="/seller"
         element={
           <ProtectedRoute role="seller">
-            <SellerModern />
+            <SellerCommandCenter />
           </ProtectedRoute>
         }
       />
@@ -92,7 +93,7 @@ function App() {
         path="/vendor"
         element={
           <ProtectedRoute role="vendor">
-            <VendorHome />
+            <VendorCommandCenter />
           </ProtectedRoute>
         }
       />
@@ -114,6 +115,19 @@ function App() {
       />
       <Route path="/vendor/shipping" element={<ProtectedRoute role="vendor"><ShipmentCenter role="vendor"/></ProtectedRoute>} />
 
+      <Route path="/seller/profit" element={<ProtectedRoute role="seller"><ProfitCalculator/></ProtectedRoute>} />
+      <Route path="/seller/kyc" element={<ProtectedRoute role="seller"><KycCenter role="seller"/></ProtectedRoute>} />
+      <Route path="/seller/wallet" element={<ProtectedRoute role="seller"><WalletCenter role="seller"/></ProtectedRoute>} />
+      <Route path="/seller/reports" element={<ProtectedRoute role="seller"><ReportsCenter role="seller"/></ProtectedRoute>} />
+      <Route path="/seller/insights" element={<ProtectedRoute role="seller"><FeaturePage role="seller" title="AI Insights" description="Actionable product, margin and fulfillment signals for your store." /></ProtectedRoute>} />
+      <Route path="/vendor/import" element={<ProtectedRoute role="vendor"><VendorImport/></ProtectedRoute>} />
+      <Route path="/vendor/inventory" element={<ProtectedRoute role="vendor"><FeaturePage role="vendor" title="Inventory Control" description="Stock health, low-stock alerts and SKU-level visibility." /></ProtectedRoute>} />
+      <Route path="/vendor/sellers" element={<ProtectedRoute role="vendor"><FeaturePage role="vendor" title="Seller Network" description="Understand seller relationships, product adoption and order contribution." /></ProtectedRoute>} />
+      <Route path="/vendor/kyc" element={<ProtectedRoute role="vendor"><KycCenter role="vendor"/></ProtectedRoute>} />
+      <Route path="/vendor/wallet" element={<ProtectedRoute role="vendor"><WalletCenter role="vendor"/></ProtectedRoute>} />
+      <Route path="/vendor/reports" element={<ReportsCenter role="vendor"/></ProtectedRoute>} />
+      <Route path="/vendor/exceptions" element={<FeaturePage role="vendor" title="NDR & RTO Intelligence" description="Monitor delivery exceptions and prioritize recovery actions." /></ProtectedRoute>} />
+      <Route path="/vendor/integrations" element={<FeaturePage role="vendor" title="Integrations" description="Shipping, APIs, webhooks and channel connectivity." /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
