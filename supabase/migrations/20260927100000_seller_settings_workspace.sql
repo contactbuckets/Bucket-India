@@ -24,6 +24,10 @@ create table if not exists public.seller_settings (
 );
 
 alter table public.seller_settings enable row level security;
+drop policy if exists "seller_settings_select_own" on public.seller_settings;
+drop policy if exists "seller_settings_insert_own" on public.seller_settings;
+drop policy if exists "seller_settings_update_own" on public.seller_settings;
+drop policy if exists "seller_settings_delete_own" on public.seller_settings;
 create policy "seller_settings_select_own" on public.seller_settings for select to authenticated using ((select auth.uid()) = user_id);
 create policy "seller_settings_insert_own" on public.seller_settings for insert to authenticated with check ((select auth.uid()) = user_id);
 create policy "seller_settings_update_own" on public.seller_settings for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
