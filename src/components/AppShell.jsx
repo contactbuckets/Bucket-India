@@ -3,9 +3,9 @@ import { useEffect,useState } from "react";
 import { useAuth } from "../context/AuthContext";
 
 const sellerGroups=[
- {title:"Workspace",items:[["⌂","Home","/seller"],["◒","Analytics","/seller"],["▤","Orders","/seller/orders"],["◇","Shipment","/seller/shipping"],["↗","External Orders","/seller/orders"],["◇","External Shipment","/seller/shipping"]]},
- {title:"Growth",items:[["▦","Manage Product","/seller/products"],["✦","Winning Ads","/seller/products"],["⊞","Source A Product","/seller/products"],["⌁","RTO Intelligence","/seller/orders"],["▱","NDR","/seller/orders"]]},
- {title:"Finance & Channels",items:[["₹","Billing","/seller/catalog"],["▣","Channels","/seller/stores"],["⚙","Settings","/seller/stores"]]}
+ {title:"Workspace",items:[["⌂","Home","/seller"],["◒","Analytics","/seller/analytics"],["▤","Orders","/seller/orders"],["◇","Shipment","/seller/shipping"],["↗","External Orders","/seller/external-orders"],["◇","External Shipment","/seller/external-shipment"]]},
+ {title:"Growth",items:[["▦","Manage Product","/seller/products"],["✦","Winning Ads","/seller/winning-ads"],["⊞","Source A Product","/seller/source-product"],["⌁","RTO Intelligence","/seller/rto-intelligence"],["▱","NDR","/seller/ndr"]]},
+ {title:"Finance & Channels",items:[["₹","Billing","/seller/billing"],["▣","Channels","/seller/stores"],["⚙","Settings","/seller/settings"]]}
 ];
 const vendorGroups=[
  {title:"Workspace",items:[["⌂","Overview","/vendor"],["▦","Products","/vendor/products"],["▤","Orders","/vendor/orders"],["◇","Shipping","/vendor/shipping"]]},
