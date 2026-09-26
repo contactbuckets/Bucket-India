@@ -2,7 +2,7 @@ import {useEffect,useMemo,useState} from "react";
 import AppShell,{Empty,Stat} from "../components/AppShell";
 import {useAuth} from "../context/AuthContext";
 import {supabase} from "../lib/supabase";
-import {CalendarBlank,CheckCircle,ChartLineUp,Clock,Coins,DownloadSimple,Funnel,Lightning,MapPin,Package,Percent,ShoppingCart,Storefront,Truck,WarningCircle,TrendUp,CreditCard,CaretDown,Check} from "@phosphor-icons/react";
+import {CalendarBlank,CheckCircle,ChartLineUp,Clock,Coins,DownloadSimple,Funnel,MagnifyingGlass,Lightning,MapPin,Package,Percent,ShoppingCart,Storefront,Truck,WarningCircle,TrendUp,CreditCard,CaretDown,Check} from "@phosphor-icons/react";
 
 const money=n=>`₹${Number(n||0).toLocaleString("en-IN",{maximumFractionDigits:2})}`;
 const statusClass=s=>`status-pill ${s||""}`;
