@@ -92,7 +92,7 @@ function App() {
         path="/vendor"
         element={
           <ProtectedRoute role="vendor">
-            <VendorCommandCenter />
+            <VendorHome />
           </ProtectedRoute>
         }
       />
@@ -108,11 +108,11 @@ function App() {
         path="/vendor/orders"
         element={
           <ProtectedRoute role="vendor">
-            <LiveVendorOrders />
+            <VendorOrders />
           </ProtectedRoute>
         }
       />
-      <Route path="/vendor/shipping" element={<ProtectedRoute role="vendor"><ShipmentCenter role="vendor"/></ProtectedRoute>} />
+      <Route path="/vendor/shipping" element={<ProtectedRoute role="vendor"><VendorShipping/></ProtectedRoute>} />
       <Route path="/vendor/analytics" element={<ProtectedRoute role="vendor"><VendorAnalytics/></ProtectedRoute>} />
       <Route path="/vendor/settings" element={<ProtectedRoute role="vendor"><VendorSettings/></ProtectedRoute>} />
       <Route path="/vendor/health" element={<ProtectedRoute role="vendor"><FeaturePage role="vendor" title="Business Health" description="Monitor fulfillment, inventory, seller service and operating readiness from one scorecard." /></ProtectedRoute>} />
