@@ -18,6 +18,8 @@ return <AppShell role="seller" title="Products"><section className="market-banne
 {msg&&<div className={msg.includes("added")?"alert success":"alert error"}>{msg}</div>}
 <div className="market-heading"><div><span className="section-kicker">LIVE MARKETPLACE</span><h2>{category==="All"?"Trending products":category}</h2><p>{filtered.length} products from active vendors</p></div><span className="result-count">{filtered.length} results</span></div>
 <div className="product-grid marketplace-grid">{filtered.map(p=><MarketplaceCard key={p.id} product={p} onAdd={()=>add(p)} marginType={marginType} margin={margin}/>)}</div>{!filtered.length&&<Empty title="No products found" text="Try another category or search term."/>}</AppShell>}
+function CatalogSelect({icon,value,onChange,options}){const label=options.find(x=>x[0]===value)?.[1]||options[0]?.[1]||"";return <details className="catalog-select"><summary>{icon}<span>{label}</span><span className="catalog-select-chevron">⌄</span></summary><div className="catalog-select-menu">{options.map(([v,l])=><button type="button" key={v} className={value===v?"selected":""} onClick={e=>{onChange(v);e.currentTarget.closest("details")?.removeAttribute("open")}}>{l}{value===v&&<CheckCircleIcon size={15} weight="fill"/>}</button>)}</div></details>}
+
 export function SellerCatalog(){
   const {session}=useAuth();
   const {data,load}=useSellerData();
@@ -40,9 +42,9 @@ export function SellerCatalog(){
       <section className="panel catalog-panel">
         <div className="catalog-toolbar">
           <div className="catalog-search"><MagnifyingGlassIcon size={18}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by product name, SKU or store"/></div>
-          <div className="catalog-filter"><ArrowsDownUpIcon size={16}/><select value={sort} onChange={e=>setSort(e.target.value)}><option value="newest">Sort by: Date added</option><option value="oldest">Sort by: Oldest first</option><option value="price">Sort by: Selling price</option><option value="margin">Sort by: Margin</option></select></div>
-          <div className="catalog-filter"><SlidersHorizontalIcon size={16}/><select value={active} onChange={e=>setActive(e.target.value)}><option value="all">All status</option><option value="active">Active</option><option value="paused">Paused</option></select></div>
-          <div className="catalog-filter"><ShoppingBagIcon size={16}/><select value={store} onChange={e=>setStore(e.target.value)}><option value="all">All stores</option>{data.stores.map(x=><option key={x.id} value={x.id}>{x.store_name||x.shop_domain}</option>)}</select></div>
+          <CatalogSelect icon={<ArrowsDownUpIcon size={16}/>} value={sort} onChange={setSort} options={[["newest","Sort by: Date added"],["oldest","Sort by: Oldest first"],["price","Sort by: Selling price"],["margin","Sort by: Margin"]]}/>
+          <CatalogSelect icon={<SlidersHorizontalIcon size={16}/>} value={active} onChange={setActive} options={[["all","All status"],["active","Active"],["paused","Paused"]]}/>
+          <CatalogSelect icon={<ShoppingBagIcon size={16}/>} value={store} onChange={setStore} options={[["all","All stores"],...data.stores.map(x=>[x.id,x.store_name||x.shop_domain])]}/>
           <button className={"catalog-toggle "+(out?"on":"")} onClick={()=>setOut(v=>!v)}>{out?<ToggleRightIcon size={22}/>:<ToggleLeftIcon size={22}/>}<span>Out of stock</span></button>
         </div>
         {msg&&<div className="alert error">{msg}</div>}
