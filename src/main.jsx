@@ -125,7 +125,7 @@ function App() {
       <Route path="/vendor/sellers" element={<ProtectedRoute role="vendor"><FeaturePage role="vendor" title="Seller Network" description="Understand seller relationships, product adoption and order contribution." /></ProtectedRoute>} />
       <Route path="/vendor/kyc" element={<ProtectedRoute role="vendor"><KycCenter role="vendor"/></ProtectedRoute>} />
       <Route path="/vendor/wallet" element={<ProtectedRoute role="vendor"><WalletCenter role="vendor"/></ProtectedRoute>} />
-      <Route path="/vendor/reports" element={<ReportsCenter role="vendor"/></ProtectedRoute>} />
+      <Route path="/vendor/reports" element={<ProtectedRoute role="vendor"><ReportsCenter role="vendor"/></ProtectedRoute>} />
       <Route path="/vendor/exceptions" element={<FeaturePage role="vendor" title="NDR & RTO Intelligence" description="Monitor delivery exceptions and prioritize recovery actions." /></ProtectedRoute>} />
       <Route path="/vendor/integrations" element={<FeaturePage role="vendor" title="Integrations" description="Shipping, APIs, webhooks and channel connectivity." /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/login" replace />} />
