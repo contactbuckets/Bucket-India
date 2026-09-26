@@ -3,13 +3,18 @@ import { useEffect,useState } from "react";
 import { useAuth } from "../context/AuthContext";
 
 const sellerGroups=[
- {title:"Workspace",items:[["⌂","Home","/seller"],["◒","Analytics","/seller/analytics"],["▤","Orders","/seller/orders"],["◇","Shipment","/seller/shipping"],["↗","External Orders","/seller/external-orders"],["◇","External Shipment","/seller/external-shipment"]]},
- {title:"Growth",items:[["▦","Manage Product","/seller/products"],["✦","Winning Ads","/seller/winning-ads"],["⊞","Source A Product","/seller/source-product"],["⌁","RTO Intelligence","/seller/rto-intelligence"],["▱","NDR","/seller/ndr"]]},
- {title:"Finance & Channels",items:[["₹","Billing","/seller/billing"],["▣","Channels","/seller/stores"],["⚙","Settings","/seller/settings"]]}
+ {title:"Command Center",items:[["⌂","Home","/seller"],["◒","Analytics","/seller/analytics"],["▤","Reports","/seller/reports"],["✦","AI Insights","/seller/insights"]]},
+ {title:"Sell",items:[["▦","Product Marketplace","/seller/products"],["₹","Profit Calculator","/seller/profit"],["✦","Winning Products","/seller/winning-ads"],["⊞","My Catalog","/seller/catalog"]]},
+ {title:"Orders",items:[["▤","Orders","/seller/orders"],["◇","Shipments","/seller/shipping"],["▱","NDR","/seller/ndr"],["⌁","RTO Intelligence","/seller/rto-intelligence"]]},
+ {title:"Money",items:[["₹","Wallet","/seller/wallet"],["◈","Settlements","/seller/billing"]]},
+ {title:"Channels & Account",items:[["▣","Shopify Stores","/seller/stores"],["✓","KYC","/seller/kyc"],["⚙","Settings","/seller/settings"]]}
 ];
 const vendorGroups=[
- {title:"Workspace",items:[["⌂","Overview","/vendor"],["▦","Products","/vendor/products"],["▤","Orders","/vendor/orders"],["◇","Shipping","/vendor/shipping"]]},
- {title:"Operations",items:[["⌁","Inventory","/vendor/products"],["▣","Integrations","/vendor/shipping"],["⚙","Settings","/vendor"]]}
+ {title:"Command Center",items:[["⌂","Overview","/vendor"],["◒","Reports","/vendor/reports"]]},
+ {title:"Catalog",items:[["▦","Products","/vendor/products"],["↥","Import Products","/vendor/import"],["▤","Inventory","/vendor/inventory"]]},
+ {title:"Orders & Fulfillment",items:[["▤","Orders","/vendor/orders"],["◇","Shipping","/vendor/shipping"],["⌁","NDR & RTO","/vendor/exceptions"]]},
+ {title:"Business",items:[["♙","Sellers","/vendor/sellers"],["₹","Wallet","/vendor/wallet"]]},
+ {title:"Account",items:[["✓","KYC","/vendor/kyc"],["▣","Integrations","/vendor/integrations"],["⚙","Settings","/vendor"]]}
 ];
 export default function AppShell({role,title,children}){
  const {profile,signOut}=useAuth(),navigate=useNavigate();
