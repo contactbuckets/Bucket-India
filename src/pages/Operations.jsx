@@ -17,7 +17,7 @@ function useOrders(role){
   let q=supabase.from("orders").select("*, listings(product_id, store_id), shipments(*), ndr_cases(*), remittances(*)").order("created_at",{ascending:false});
   if(role==="seller")q=q.eq("seller_id",session.user.id);else{
    const {data:v}=await supabase.from("vendors").select("id").eq("owner_id",session.user.id).maybeSingle();
-   q=v?q.eq("vendor_id",v.id).neq("status","pending"):q.eq("vendor_id","00000000-0000-0000-0000-000000000000");
+   q=v?q.eq("vendor_id",v.id).in("status",["confirmed","packed","shipped","delivered","ndr","rto","cancelled"]):q.eq("vendor_id","00000000-0000-0000-0000-000000000000");
   }
   const {data,error}=await q; if(!error)setRows(data||[]); setLoading(false);
  }
