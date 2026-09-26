@@ -14,7 +14,7 @@ function Notifications({open,onClose}){const navigate=useNavigate();const notifi
 
 export function AppShell({role,title,children}){
  const {profile,signOut}=useAuth(),navigate=useNavigate(),location=useLocation();const [dark,setDark]=useState(()=>localStorage.getItem("bucket-theme")==="dark"),[searchOpen,setSearchOpen]=useState(false),[notificationsOpen,setNotificationsOpen]=useState(false);
- const groups=role==="vendor"?vendorGroups:sellerGroups;
+ const groups=role==="vendor"?vendorGroups:role==="admin"?adminGroups:sellerGroups;
  useEffect(()=>{document.documentElement.dataset.theme=dark?"dark":"light";localStorage.setItem("bucket-theme",dark?"dark":"light")},[dark]);
  useEffect(()=>{const f=e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){e.preventDefault();setSearchOpen(true)}if(e.key==="Escape"){setSearchOpen(false);setNotificationsOpen(false)}};window.addEventListener("keydown",f);return()=>window.removeEventListener("keydown",f)},[]);
  async function logout(){await signOut();navigate("/login",{replace:true})}
