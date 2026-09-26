@@ -12,7 +12,7 @@ function SearchPalette({open,onClose,role}){const [q,setQ]=useState("");const na
 
 function Notifications({open,onClose}){const navigate=useNavigate();const notifications=[{icon:ShoppingCart,title:"Order activity",text:"Review your latest seller orders.",href:"/seller/orders"},{icon:WarningCircle,title:"NDR center",text:"Check delivery exceptions needing action.",href:"/seller/ndr"},{icon:Wallet,title:"Settlement",text:"Review your latest payout activity.",href:"/seller/billing"}];if(!open)return null;return <div className="notification-popover"><div className="notification-head"><div><b>Notifications</b><span>Important workspace activity</span></div><button onClick={onClose}><X size={16}/></button></div>{notifications.map(n=>{const I=n.icon;return <button className="notification-item" key={n.href} onClick={()=>{navigate(n.href);onClose()}}><span className="notification-icon"><I size={17}/></span><span><b>{n.title}</b><small>{n.text}</small></span><span className="notification-dot"/></button>})}<div className="notification-foot">All caught up · Bucket India</div></div>}
 
-export default function AppShell({role,title,children}){
+export function AppShell({role,title,children}){
  const {profile,signOut}=useAuth(),navigate=useNavigate(),location=useLocation();const [dark,setDark]=useState(()=>localStorage.getItem("bucket-theme")==="dark"),[searchOpen,setSearchOpen]=useState(false),[notificationsOpen,setNotificationsOpen]=useState(false);
  const groups=role==="vendor"?vendorGroups:sellerGroups;
  useEffect(()=>{document.documentElement.dataset.theme=dark?"dark":"light";localStorage.setItem("bucket-theme",dark?"dark":"light")},[dark]);
