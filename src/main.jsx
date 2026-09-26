@@ -7,6 +7,7 @@ import Login from "./pages/Login";
 import SellerModern from "./pages/SellerModern";
 import SellerMarketplace from "./pages/SellerMarketplace";
 import {SellerCommandCenter,VendorCommandCenter,ProfitCalculator,KycCenter,WalletCenter,ReportsCenter,VendorImport,FeaturePage,CustomerCenter,StoreHealth} from "./pages/GrowthOS";
+import SellerSettings from "./pages/SellerSettings";
 import {
   SellerHome,
   SellerProducts,
@@ -81,7 +82,7 @@ function App() {
       <Route path="/seller/rto-intelligence" element={<ProtectedRoute role="seller"><RtoCenter role="seller"/></ProtectedRoute>} />
       <Route path="/seller/ndr" element={<ProtectedRoute role="seller"><NdrCenter role="seller"/></ProtectedRoute>} />
       <Route path="/seller/billing" element={<ProtectedRoute role="seller"><RemittanceCenter role="seller"/></ProtectedRoute>} />
-      <Route path="/seller/settings" element={<ProtectedRoute role="seller"><SellerFeature title="Settings" eyebrow="WORKSPACE" description="Seller preferences, channel configuration and account controls belong here."/></ProtectedRoute>} />
+      <Route path="/seller/settings" element={<ProtectedRoute role="seller"><SellerSettings/></ProtectedRoute>} />
 
       <Route path="/seller/shipping" element={<ProtectedRoute role="seller"><ShipmentCenter role="seller"/></ProtectedRoute>} />
 
