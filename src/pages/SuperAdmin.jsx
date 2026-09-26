@@ -1,4 +1,5 @@
 import {useEffect,useMemo,useState} from "react";
+import {useLocation} from "react-router-dom";
 import {AppShell,Stat,Empty} from "../components/AppShell";
 import {supabase} from "../lib/supabase";
 import {useAuth} from "../context/AuthContext";
@@ -10,8 +11,9 @@ const tabs={overview:"overview",users:"users",kyc:"kyc",vendors:"vendors",stores
 const tableLabels={vendors:"Vendors",stores:"Stores",products:"Products",listings:"Listings",orders:"Orders",shipments:"Shipments",ndr_cases:"NDR Cases",wallet_accounts:"Wallet Accounts",wallet_transactions:"Wallet Transactions",remittances:"Remittances",shipping_configs:"Shipping Configs",vendor_shipping_connections:"Vendor Shipping Connections",seller_settings:"Seller Settings",vendor_settings:"Vendor Settings"};
 
 export default function SuperAdmin(){
- const {profile}=useAuth(); const [tab,setTab]=useState("overview"),[loading,setLoading]=useState(true),[users,setUsers]=useState([]),[selected,setSelected]=useState(null),[q,setQ]=useState(""),[role,setRole]=useState("all"),[status,setStatus]=useState("all"),[kyc,setKyc]=useState("all"),[data,setData]=useState({}),[saving,setSaving]=useState(false),[message,setMessage]=useState("");
+ const {profile}=useAuth(); const location=useLocation(); const pathTab=location.pathname.split("/").filter(Boolean)[1]||"overview"; const normalizedTab=pathTab==="ndr"?"ndr":pathTab==="wallet"?"wallet":pathTab; const [tab,setTab]=useState(normalizedTab),[loading,setLoading]=useState(true),[users,setUsers]=useState([]),[selected,setSelected]=useState(null),[q,setQ]=useState(""),[role,setRole]=useState("all"),[status,setStatus]=useState("all"),[kyc,setKyc]=useState("all"),[data,setData]=useState({}),[saving,setSaving]=useState(false),[message,setMessage]=useState("");
  const load=async()=>{setLoading(true);const names=["profiles","admin_user_controls","kyc_profiles","vendors","stores","products","listings","orders","shipments","ndr_cases","wallet_accounts","wallet_transactions","remittances","shipping_configs","vendor_shipping_connections","seller_settings","vendor_settings"];const rs=await Promise.all(names.map(n=>supabase.from(n).select("*")));const out={};names.forEach((n,i)=>out[n]=rs[i].data||[]);setData(out);const cm=new Map((out.admin_user_controls||[]).map(x=>[x.user_id,x]));const km=new Map((out.kyc_profiles||[]).map(x=>[x.user_id,x]));setUsers((out.profiles||[]).map(p=>({...p,control:cm.get(p.id)||{status:"active",access:blankAccess,vendor_margin_cut:0,seller_margin_cut:0},kyc:km.get(p.id)||null})));setLoading(false)};
+ useEffect(()=>{setTab(normalizedTab)},[normalizedTab]);
  useEffect(()=>{load()},[]);
  const filtered=useMemo(()=>users.filter(u=>(role==="all"||u.role===role)&&(status==="all"||u.control?.status===status)&&(kyc==="all"||(u.kyc?.status||"not_submitted")===kyc)&&(!q||[u.full_name,u.phone,u.id,u.role,u.kyc?.business_name,u.kyc?.legal_name].filter(Boolean).join(" ").toLowerCase().includes(q.toLowerCase()))),[users,q,role,status,kyc]);
  const orders=data.orders||[], products=data.products||[], vendors=data.vendors||[], shipments=data.shipments||[], ndr=data.ndr_cases||[], remittances=data.remittances||[];
