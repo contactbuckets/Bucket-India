@@ -11,26 +11,112 @@ function Card({children,className=""}){return <section className={"panel "+class
 function Head({kicker,title,text,action}){return <div className="panel-head"><div>{kicker&&<span className="section-kicker">{kicker}</span>}<h2>{title}</h2>{text&&<p>{text}</p>}</div>{action}</div>}
 
 export function SellerCommandCenter(){
- const {session}=useAuth(); const [d,setD]=useState({orders:[],products:[],listings:[],stores:[]});
- useEffect(()=>{if(!session?.user?.id)return;const u=session.user.id;Promise.all([
-  supabase.from("orders").select("*").eq("seller_id",u).order("created_at",{ascending:false}),
-  supabase.from("products").select("*").eq("status","active"),
-  supabase.from("listings").select("*").eq("seller_id",u),
-  supabase.from("stores").select("*").eq("seller_id",u)
- ]).then(([o,p,l,st])=>setD({orders:o.data||[],products:p.data||[],listings:l.data||[],stores:st.data||[]}))},[session?.user?.id]);
- const revenue=d.orders.reduce((a,o)=>a+Number(o.amount||0),0),delivered=d.orders.filter(o=>o.status==="delivered").length;
- const margin=d.orders.reduce((a,o)=>a+Number(o.seller_margin||0),0)||d.listings.reduce((a,l)=>a+Number(l.selling_price||0)-Number(l.cost_price||0),0);
- const exceptions=d.orders.filter(o=>["ndr","rto"].includes(o.status)).length,pending=d.orders.filter(o=>o.status==="pending").length,delivery=d.orders.length?Math.round(delivered/d.orders.length*100):0;
+ const {session}=useAuth();
+ const [d,setD]=useState({orders:[],products:[],listings:[],stores:[],wallet:null});
+ const [loading,setLoading]=useState(true);
+ useEffect(()=>{if(!session?.user?.id)return;const u=session.user.id;
+  Promise.all([
+   supabase.from("orders").select("*").eq("seller_id",u).order("created_at",{ascending:false}),
+   supabase.from("products").select("*").eq("status","active"),
+   supabase.from("listings").select("*").eq("seller_id",u),
+   supabase.from("stores").select("*").eq("seller_id",u),
+   supabase.from("wallet_accounts").select("*").eq("user_id",u).maybeSingle()
+  ]).then(([o,p,l,st,w])=>{setD({orders:o.data||[],products:p.data||[],listings:l.data||[],stores:st.data||[],wallet:w.data||null});setLoading(false)})
+ },[session?.user?.id]);
+
+ const revenue=d.orders.reduce((a,o)=>a+Number(o.amount||0),0);
+ const delivered=d.orders.filter(o=>o.status==="delivered");
+ const pending=d.orders.filter(o=>["pending","confirmed"].includes(o.status)).length;
+ const exceptions=d.orders.filter(o=>["ndr","rto"].includes(o.status)).length;
+ const margin=d.orders.reduce((a,o)=>a+Number(o.seller_margin||0),0);
+ const estimatedMargin=margin||d.orders.reduce((a,o)=>a+Math.max(0,Number(o.amount||0)-Number(o.cost_price||0)-Number(o.shipping_cost||0)),0);
+ const aov=d.orders.length?revenue/d.orders.length:0;
+ const delivery=d.orders.length?Math.round(delivered.length/d.orders.length*100):0;
+ const cod=d.orders.filter(o=>String(o.payment_mode||o.payment_method||"").toLowerCase().includes("cod"));
+ const codValue=cod.reduce((a,o)=>a+Number(o.amount||0),0);
+ const walletAvailable=Number(d.wallet?.available_balance||0);
+ const setupSteps=[
+  [!d.stores.length,"Connect Shopify","Bring your store orders into Bucket India.","Connect store","/seller/stores",Storefront],
+  [!d.listings.length,"Add your first product","Choose a product, calculate profit and launch it.","Discover products","/seller/products",Package],
+  [!d.listings.length,"Calculate profit before selling","Know your net margin after shipping, COD and RTO costs.","Calculate profit","/seller/profit",CurrencyInr],
+  [d.orders.length===0,"Get your first order","Once your store and product are live, start taking orders.","Open orders","/seller/orders",ShoppingCart],
+  [exceptions>0,"Resolve delivery exceptions","Recover NDR/RTO orders before they become lost revenue.","Fix exceptions","/seller/ndr",WarningCircle],
+ ].filter(x=>x[0]);
+ const completedSetup=[d.stores.length>0,d.listings.length>0,d.orders.length>0].filter(Boolean).length;
  const health=Math.max(35,Math.min(98,55+(delivery*.25)+(d.stores.length*7)+(d.listings.length?10:0)-(exceptions*2)));
- const attention=[[pending,"action",pending+" orders waiting for confirmation","Confirm now","/seller/orders"],[exceptions,"risk",exceptions+" shipments need recovery attention","Open exceptions","/seller/ndr"],[!d.stores.length,"setup","Connect Shopify to start selling","Connect store","/seller/stores"],[true,"money",money(margin)+" estimated contribution margin","Review profit","/seller/profit"]].filter(x=>x[0]);
- return <AppShell role="seller" title="Seller Command Center">
-  <section className="command-hero seller-command"><div><span className="hero-kicker">BUCKET INDIA · GROWTH OS</span><h2>Run your store from <span>one beautiful cockpit.</span></h2><p>Discover products, price for profit, automate the journey from Shopify order to delivery and keep every rupee visible.</p><div className="hero-actions"><NavLink className="btn primary" to="/seller/products">Discover products <ArrowUpRight size={16}/></NavLink><NavLink className="btn glass" to="/seller/profit"><CurrencyInr size={16}/>Model profit</NavLink></div></div><div className="hero-orb command-orb"><div>BI</div><i/><i/><i/></div></section>
-  <div className="stats modern-stats"><Stat label="Gross order value" value={money(revenue)} hint={d.orders.length+" orders"}/><Stat label="Contribution margin" value={money(margin)} hint="Order margin where available"/><Stat label="Delivery rate" value={d.orders.length?delivery+"%":"—"} hint={exceptions+" active exceptions"}/><Stat label="Store health" value={Math.round(health)+"/100"} hint="Operating readiness"/></div>
-  <div className="attention-strip"><div><span className="section-kicker">ATTENTION CENTER</span><b>What needs your attention today?</b></div><div className="attention-items">{attention.slice(0,4).map((x,i)=><NavLink className={"attention "+x[1]} to={x[4]} key={i}><i>{x[1]==="risk"?<WarningCircle size={16}/>:x[1]==="money"?<CurrencyInr size={16}/>:<CheckCircle size={16}/>}</i><span>{x[2]}</span><strong>{x[3]} <ArrowRight size={13}/></strong></NavLink>)}</div></div>
-  <div className="dashboard-grid command-grid"><Card><Head kicker="LIVE PERFORMANCE" title="Revenue momentum" text="A quick view of order value across your latest activity."/><div className="sparkline">{[22,38,31,56,48,72,64,86,78,94].map((h,i)=><i key={i} style={{height:h+"%"}}/> )}</div><div className="chart-caption"><span><b>{money(revenue)}</b> tracked order value</span><span className="trend-up">↗ Live workspace data</span></div></Card><Card><Head kicker="BUCKET AI" title="One useful insight" text="Signals become actions, not another report."/><div className="ai-insight"><div className="ai-icon"><Sparkle size={18} weight="fill"/></div><div><b>{exceptions?"Your exception queue is the fastest lever":"Your store is ready for its next growth step"}</b><p>{exceptions?"You have "+exceptions+" NDR/RTO orders. Resolve these before adding more ad spend.":"Connect a Shopify store, launch a high-margin product and track the first 10 delivered orders."}</p><NavLink to={exceptions?"/seller/ndr":"/seller/products"}>{exceptions?"Recover orders":"Find a product"} <ArrowRight size={13}/></NavLink></div></div></Card></div>
-  <div className="growth-grid"><Card><Head kicker="SELL MORE" title="Product intelligence" text="Move from product discovery to profitable launch."/><div className="quick-grid">{[["Product Marketplace","Find products with vendor stock and margin","/seller/products",SquaresFour],["Profit Calculator","Model true net contribution","/seller/profit",CurrencyInr],["Winning Products","Spot products worth testing","/seller/winning-ads",Sparkle],["My Catalog","Manage what you actually sell","/seller/catalog",Package]].map(x=>{const I=x[3];return <NavLink className="feature-card" to={x[2]} key={x[0]}><span><I size={17}/></span><div><b>{x[0]}</b><p>{x[1]}</p></div><strong><ArrowRight size={14}/></strong></NavLink>})}</div></Card>
-   <Card><Head kicker="STORE HEALTH" title={Math.round(health)+"/100"}/><div className="health-score"><div className="health-ring" style={{"--score":health+"%"}}><b>{Math.round(health)}</b><span>/100</span></div><div><b>Business health</b><p>Delivery, channels, catalog and exception signals.</p><div className="health-bars"><span><i style={{width:Math.min(100,delivery)+"%"}}/>Delivery</span><span><i style={{width:Math.min(100,d.stores.length?100:12)+"%"}}/>Channels</span><span><i style={{width:Math.min(100,d.listings.length?82:15)+"%"}}/>Catalog</span></div></div></div></Card></div>
-  <Card className="momentum-panel"><Head kicker="COMMAND SHORTCUTS" title="Everything important is one click away"/><div className="shortcut-grid">{[["Orders","Review pending orders","/seller/orders",ShoppingCart],["Shipments","Track fulfillment","/seller/shipping",Truck],["Customers","Understand repeat buyers","/seller/customers",UsersThree],["NDR / RTO","Recover at-risk revenue","/seller/ndr",WarningCircle],["Wallet","See available money","/seller/wallet",Wallet],["KYC","Build account trust","/seller/kyc",CheckCircle],["Reports","Explore business intelligence","/seller/reports",ChartLine],["AI Insights","Turn data into actions","/seller/insights",Sparkle]].map(x=><NavLink className="shortcut" to={x[2]} key={x[0]}><b>{x[0]}</b><span>{x[1]}</span><strong><ArrowRight size={14}/></strong></NavLink>)}</div></Card>
+ const discover=d.products.slice(0,4);
+ return <AppShell role="seller" title="Home">
+  <section className="home-hero">
+   <div className="home-hero-copy">
+    <span className="hero-kicker">BUCKET INDIA · SELLER HOME</span>
+    <h2>Everything you need to <span>start selling profitably.</span></h2>
+    <p>Discover products, connect Shopify, understand your profit and manage every order from one simple home.</p>
+    <div className="hero-actions">
+     <NavLink className="btn primary" to="/seller/products"><SquaresFour size={17}/> Discover products <ArrowRight size={15}/></NavLink>
+     <NavLink className="btn glass" to="/seller/profit"><CurrencyInr size={17}/> Calculate profit</NavLink>
+    </div>
+   </div>
+   <div className="home-progress">
+    <div className="home-progress-top"><span>Getting started</span><b>{completedSetup}/3</b></div>
+    <div className="home-progress-bar"><i style={{width:Math.round(completedSetup/3*100)+"%"}}/></div>
+    <small>{completedSetup===3?"Your core setup is complete. Keep growing.":"Complete the basics and your workspace is ready to grow."}</small>
+   </div>
+  </section>
+
+  <section className="home-kpi-grid">
+   <div className="home-kpi"><span><CurrencyInr size={17}/> Revenue</span><strong>{money(revenue)}</strong><small>{d.orders.length} total orders</small></div>
+   <div className="home-kpi"><span><ChartLine size={17}/> Estimated profit</span><strong>{money(estimatedMargin)}</strong><small>Contribution after known costs</small></div>
+   <div className="home-kpi"><span><ShoppingCart size={17}/> Orders</span><strong>{d.orders.length}</strong><small>{pending} need attention</small></div>
+   <div className="home-kpi"><span><Truck size={17}/> Delivery rate</span><strong>{d.orders.length?delivery+"%":"—"}</strong><small>{exceptions} NDR / RTO exceptions</small></div>
+   <div className="home-kpi"><span><Receipt size={17}/> AOV</span><strong>{d.orders.length?money(aov):"—"}</strong><small>Average order value</small></div>
+   <div className="home-kpi"><span><Wallet size={17}/> Available balance</span><strong>{money(walletAvailable)}</strong><small>Ready for settlement / use</small></div>
+  </section>
+
+  <div className="home-main-grid">
+   <Card className="home-tasks-card">
+    <Head kicker="START HERE" title="Your next steps" text="We’ll keep this simple. Finish the tasks that unlock your store first."/>
+    <div className="beginner-tasks">
+     {setupSteps.length?setupSteps.slice(0,5).map(([show,title,text,cta,href,I],i)=><NavLink className="beginner-task" to={href} key={title}>
+       <span className="task-number">{i+1}</span><span className="task-icon"><I size={19}/></span><div><b>{title}</b><p>{text}</p></div><strong>{cta}<ArrowRight size={14}/></strong>
+     </NavLink>):<div className="task-complete"><CheckCircle size={24}/><div><b>You're all set</b><p>Your store foundation is complete. Explore products, monitor profit and grow your order volume.</p></div></div>}
+    </div>
+   </Card>
+
+   <Card className="home-profit-card">
+    <Head kicker="MONEY FIRST" title="Know your profit before you sell" text="Selling price is not profit. Model shipping, COD, payment fees and RTO before launching."/>
+    <div className="profit-preview"><div><span>Example selling price</span><b>₹999</b></div><div><span>Estimated net profit</span><strong>₹299</strong></div></div>
+    <div className="profit-points"><span><CheckCircle size={14}/> Vendor cost</span><span><CheckCircle size={14}/> Shipping</span><span><CheckCircle size={14}/> COD / payment fee</span><span><CheckCircle size={14}/> RTO risk</span></div>
+    <NavLink className="btn primary full" to="/seller/profit">Open profit calculator <ArrowRight size={15}/></NavLink>
+   </Card>
+  </div>
+
+  <div className="home-section-head"><div><span className="section-kicker">DISCOVER & LAUNCH</span><h2>Find your next product</h2><p>Start with products already available in the Bucket India marketplace.</p></div><NavLink className="btn secondary" to="/seller/products">View all products <ArrowRight size={14}/></NavLink></div>
+  <div className="home-products">
+   {discover.length?discover.map(p=><NavLink className="home-product" to="/seller/products" key={p.id}>
+    <div className="home-product-image">{p.image_url?<img src={p.image_url} alt=""/>:<Package size={25}/>}</div>
+    <div className="home-product-body"><span>{p.category||"General"}</span><b>{p.title||p.name||"Marketplace product"}</b><small>Vendor cost · {money(p.cost_price)}</small><strong>View product <ArrowUpRight size={13}/></strong></div>
+   </NavLink>):<Card><Empty title="Product discovery is ready" text="Browse the marketplace to find products you can test and sell."/></Card>}
+  </div>
+
+  <section className="home-bottom-grid">
+   <Card><Head kicker="TODAY AT A GLANCE" title="Your business snapshot"/>
+    <div className="snapshot-list">
+     <div><span><ShoppingCart size={16}/> Orders</span><b>{d.orders.length}</b><small>{pending} pending</small></div>
+     <div><span><CurrencyInr size={16}/> COD value</span><b>{money(codValue)}</b><small>{cod.length} COD orders</small></div>
+     <div><span><Truck size={16}/> Delivered</span><b>{delivered.length}</b><small>{delivery}% delivery rate</small></div>
+     <div><span><WarningCircle size={16}/> Exceptions</span><b>{exceptions}</b><small>NDR + RTO</small></div>
+    </div>
+   </Card>
+   <Card><Head kicker="STORE HEALTH" title={Math.round(health)+"/100"} text="A simple view of what is ready and what needs attention."/>
+    <div className="home-health"><div className="health-ring" style={{"--score":health+"%"}}><b>{Math.round(health)}</b><span>/100</span></div><div className="health-checks"><span className={d.stores.length?"done":""}><Storefront size={15}/> Shopify connected <b>{d.stores.length?"Ready":"Do this first"}</b></span><span className={d.listings.length?"done":""}><Package size={15}/> Catalog <b>{d.listings.length?d.listings.length+" products":"Add a product"}</b></span><span className={exceptions?"risk":"done"}><WarningCircle size={15}/> Exceptions <b>{exceptions?"Needs attention":"Clear"}</b></span></div></div>
+   </Card>
+  </section>
+
+  <Card className="home-quick-card"><Head kicker="WHEN YOU NEED IT" title="Quick access"/>
+   <div className="home-quick-grid">{[
+    ["Orders","Manage incoming orders","/seller/orders",ShoppingCart],["Shipments","Track delivery","/seller/shipping",Truck],["NDR / RTO","Recover at-risk orders","/seller/ndr",WarningCircle],["Wallet","See your money","/seller/wallet",Wallet],["Analytics","Understand performance","/seller/analytics",ChartLine],["Settings","Business & account setup","/seller/settings",Gear]
+   ].map(([a,b,h,I])=><NavLink className="home-quick" to={h} key={a}><span><I size={18}/></span><div><b>{a}</b><small>{b}</small></div><ArrowRight size={14}/></NavLink>)}</div>
+  </Card>
  </AppShell>
 }
 export function VendorCommandCenter(){
