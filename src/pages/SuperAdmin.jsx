@@ -2,7 +2,7 @@ import {useEffect,useMemo,useState} from "react";
 import {AppShell,Stat,Empty} from "../components/AppShell";
 import {supabase} from "../lib/supabase";
 import {useAuth} from "../context/AuthContext";
-import {UsersThree,Package,Truck,WarningCircle,CheckCircle,Prohibit,ShieldCheck,SlidersHorizontal,Wallet,ChartLine, MagnifyingGlass, X, FloppyDisk, UserGear, Trash, PauseCircle, LockKey, Check, XCircle, CaretRight, Activity, CurrencyInr} from "@phosphor-icons/react";
+import {UsersThree,Package,Truck,WarningCircle,CheckCircle,Prohibit,ShieldCheck,SlidersHorizontal,Wallet,ChartLine, MagnifyingGlass, X, FloppyDisk, UserGear, Trash, PauseCircle, LockKey, Check, XCircle, CaretRight, ListChecks, CurrencyInr} from "@phosphor-icons/react";
 
 const money=n=>"₹"+Number(n||0).toLocaleString("en-IN",{maximumFractionDigits:0});
 const blankAccess={dashboard:true,orders:true,products:true,shipments:true,ndr:true,wallet:true,analytics:true,settings:true,api:true};
