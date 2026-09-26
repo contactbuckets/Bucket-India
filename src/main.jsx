@@ -20,6 +20,7 @@ import {
   VendorOrders,
   VendorShipping
 } from "./pages/Vendor";
+import {SellerOrders as LiveSellerOrders, VendorOrders as LiveVendorOrders, ShipmentCenter, NdrCenter, RtoCenter, RemittanceCenter, SellerAnalytics} from "./pages/Operations";
 import "./style.css";
 import "./modern.css";
 
@@ -64,18 +65,18 @@ function App() {
         path="/seller/orders"
         element={
           <ProtectedRoute role="seller">
-            <SellerOrders />
+            <LiveSellerOrders />
           </ProtectedRoute>
         }
       />
-      <Route path="/seller/analytics" element={<ProtectedRoute role="seller"><SellerFeature title="Analytics" eyebrow="PERFORMANCE" description="Track catalog adoption, orders and seller activity from one performance workspace."/></ProtectedRoute>} />
+      <Route path="/seller/analytics" element={<ProtectedRoute role="seller"><SellerAnalytics/></ProtectedRoute>} />
       <Route path="/seller/external-orders" element={<ProtectedRoute role="seller"><SellerFeature title="External Orders" eyebrow="ORDER OPERATIONS" description="Centralize orders from channels outside the primary store connection."/></ProtectedRoute>} />
       <Route path="/seller/external-shipment" element={<ProtectedRoute role="seller"><SellerFeature title="External Shipment" eyebrow="SHIPMENT OPERATIONS" description="Manage shipment workflows for external order sources."/></ProtectedRoute>} />
       <Route path="/seller/winning-ads" element={<ProtectedRoute role="seller"><SellerFeature title="Winning Ads" eyebrow="GROWTH" description="Keep proven product creatives and campaign workflows close to your catalog."/></ProtectedRoute>} />
       <Route path="/seller/source-product" element={<ProtectedRoute role="seller"><SellerFeature title="Source A Product" eyebrow="PRODUCT SOURCING" description="Discover, compare and move promising products into your catalog."/></ProtectedRoute>} />
-      <Route path="/seller/rto-intelligence" element={<ProtectedRoute role="seller"><SellerFeature title="RTO Intelligence" eyebrow="RISK" description="Prepare a focused workspace for return-to-origin signals and operational actions."/></ProtectedRoute>} />
-      <Route path="/seller/ndr" element={<ProtectedRoute role="seller"><SellerFeature title="NDR" eyebrow="DELIVERY" description="Keep non-delivery follow-ups and courier actions in one place."/></ProtectedRoute>} />
-      <Route path="/seller/billing" element={<ProtectedRoute role="seller"><SellerFeature title="Billing" eyebrow="FINANCE" description="Review billing and margin-remittance workflows from your seller workspace."/></ProtectedRoute>} />
+      <Route path="/seller/rto-intelligence" element={<ProtectedRoute role="seller"><RtoCenter role="seller"/></ProtectedRoute>} />
+      <Route path="/seller/ndr" element={<ProtectedRoute role="seller"><NdrCenter role="seller"/></ProtectedRoute>} />
+      <Route path="/seller/billing" element={<ProtectedRoute role="seller"><RemittanceCenter role="seller"/></ProtectedRoute>} />
       <Route path="/seller/settings" element={<ProtectedRoute role="seller"><SellerFeature title="Settings" eyebrow="WORKSPACE" description="Seller preferences, channel configuration and account controls belong here."/></ProtectedRoute>} />
 
       <Route
@@ -107,18 +108,11 @@ function App() {
         path="/vendor/orders"
         element={
           <ProtectedRoute role="vendor">
-            <VendorOrders />
+            <LiveVendorOrders />
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/vendor/shipping"
-        element={
-          <ProtectedRoute role="vendor">
-            <VendorShipping />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/vendor/shipping" element={<ProtectedRoute role="vendor"><ShipmentCenter role="vendor"/></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
