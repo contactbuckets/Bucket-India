@@ -1,8 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 
-const url = process.env.SUPABASE_URL;
-const key = process.env.SUPABASE_PUBLISHABLE_KEY;
+const url = "https://qpcvesdlfqheigbzxbjr.supabase.co";
+const key = "sb_publishable_EUGJuOLm-BNO_tT_2S8vew_lwLIyO46";
 
-if (!url || !key) console.warn("Missing SUPABASE_URL or SUPABASE_PUBLISHABLE_KEY. Copy .env.example to .env.");
-
-export const supabase = createClient(url || "", key || "");
+export const supabase = createClient(url, key);
