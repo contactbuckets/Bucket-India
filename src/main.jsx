@@ -4,6 +4,7 @@ import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
+import SellerModern from "./pages/SellerModern";
 import {
   SellerHome,
   SellerProducts,
@@ -19,6 +20,7 @@ import {
   VendorShipping
 } from "./pages/Vendor";
 import "./style.css";
+import "./modern.css";
 
 function App() {
   return (
@@ -29,7 +31,7 @@ function App() {
         path="/seller"
         element={
           <ProtectedRoute role="seller">
-            <SellerHome />
+            <SellerModern />
           </ProtectedRoute>
         }
       />
