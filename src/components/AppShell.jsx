@@ -22,3 +22,5 @@ export function AppShell({role,title,children}){
 }
 export function Stat({label,value,hint}){return <div className="stat-card"><span>{label}</span><strong>{value}</strong>{hint&&<small>{hint}</small>}</div>}
 export function Empty({title,text}){return <div className="empty"><div className="empty-icon"><Package size={25}/></div><h3>{title}</h3><p>{text}</p></div>}
+
+export default AppShell;
