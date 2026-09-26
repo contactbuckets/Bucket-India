@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 const sellerGroups=[
  {title:"Command Center",items:[["⌂","Home","/seller"],["◒","Analytics","/seller/analytics"]]},
  {title:"Sell",items:[["▦","Product Marketplace","/seller/products"],["⊞","My Catalog","/seller/catalog"]]},
- {title:"Orders",items:[["▤","Orders","/seller/orders"],["◇","Shipments","/seller/shipping"],["▱","NDR","/seller/ndr"],["⌁","RTO Intelligence","/seller/rto-intelligence"]]},
+ {title:"Orders",items:[["▤","Orders","/seller/orders"],["◇","Shipments","/seller/shipping"],["▱","NDR","/seller/ndr"]]},
  {title:"Money",items:[["₹","Wallet","/seller/wallet"],["◈","Settlements","/seller/billing"]]},
  {title:"Channels & Account",items:[["▣","Shopify Stores","/seller/stores"],["⚙","Settings","/seller/settings"]]}
 ];
