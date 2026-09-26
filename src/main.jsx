@@ -111,7 +111,7 @@ function App() {
         }
       />
       <Route path="/vendor/shipping" element={<ProtectedRoute role="vendor"><ShipmentCenter role="vendor"/></ProtectedRoute>} />
-      <Route path="/vendor/health" element={<ProtectedRoute role="vendor"><FeaturePage role="vendor" title="Business Health" description="Monitor fulfillment, inventory, seller service and operating readiness from one scorecard." /></ProtectedRoute>} />
+      <Route path="/vendor/analytics" element={<ProtectedRoute role="vendor"><VendorAnalytics/></ProtectedRoute>} />\n      <Route path="/vendor/settings" element={<ProtectedRoute role="vendor"><VendorSettings/></ProtectedRoute>} />\n      <Route path="/vendor/health" element={<ProtectedRoute role="vendor"><FeaturePage role="vendor" title="Business Health" description="Monitor fulfillment, inventory, seller service and operating readiness from one scorecard." /></ProtectedRoute>} />
       <Route path="/vendor/pricing" element={<ProtectedRoute role="vendor"><FeaturePage role="vendor" title="Pricing Intelligence" description="Control vendor pricing, seller economics and marketplace-ready margins." /></ProtectedRoute>} />
 
       <Route path="/seller/profit" element={<ProtectedRoute role="seller"><ProfitCalculator/></ProtectedRoute>} />
