@@ -81,14 +81,7 @@ function App() {
       <Route path="/seller/billing" element={<ProtectedRoute role="seller"><RemittanceCenter role="seller"/></ProtectedRoute>} />
       <Route path="/seller/settings" element={<ProtectedRoute role="seller"><SellerFeature title="Settings" eyebrow="WORKSPACE" description="Seller preferences, channel configuration and account controls belong here."/></ProtectedRoute>} />
 
-      <Route
-        path="/seller/shipping"
-        element={
-          <ProtectedRoute role="seller">
-            <SellerShipping />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/seller/shipping" element={<ProtectedRoute role="seller"><ShipmentCenter role="seller"/></ProtectedRoute>} />
 
       <Route
         path="/vendor"
