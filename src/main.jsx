@@ -71,7 +71,9 @@ function App() {
           </ProtectedRoute>
         }
       />
-      <Route path="/seller/analytics" element={<ProtectedRoute role="seller"><SellerAnalytics/></ProtectedRoute>} />\n      <Route path="/seller/customers" element={<ProtectedRoute role="seller"><CustomerCenter/></ProtectedRoute>} />\n      <Route path="/seller/health" element={<ProtectedRoute role="seller"><StoreHealth/></ProtectedRoute>} />
+      <Route path="/seller/analytics" element={<ProtectedRoute role="seller"><SellerAnalytics/></ProtectedRoute>} />
+      <Route path="/seller/customers" element={<ProtectedRoute role="seller"><CustomerCenter/></ProtectedRoute>} />
+      <Route path="/seller/health" element={<ProtectedRoute role="seller"><StoreHealth/></ProtectedRoute>} />
       <Route path="/seller/external-orders" element={<ProtectedRoute role="seller"><SellerFeature title="External Orders" eyebrow="ORDER OPERATIONS" description="Centralize orders from channels outside the primary store connection."/></ProtectedRoute>} />
       <Route path="/seller/external-shipment" element={<ProtectedRoute role="seller"><SellerFeature title="External Shipment" eyebrow="SHIPMENT OPERATIONS" description="Manage shipment workflows for external order sources."/></ProtectedRoute>} />
       <Route path="/seller/winning-ads" element={<ProtectedRoute role="seller"><SellerFeature title="Winning Ads" eyebrow="GROWTH" description="Keep proven product creatives and campaign workflows close to your catalog."/></ProtectedRoute>} />
@@ -107,7 +109,9 @@ function App() {
           </ProtectedRoute>
         }
       />
-      <Route path="/vendor/shipping" element={<ProtectedRoute role="vendor"><ShipmentCenter role="vendor"/></ProtectedRoute>} />\n      <Route path="/vendor/health" element={<ProtectedRoute role="vendor"><FeaturePage role="vendor" title="Business Health" description="Monitor fulfillment, inventory, seller service and operating readiness from one scorecard." /></ProtectedRoute>} />\n      <Route path="/vendor/pricing" element={<ProtectedRoute role="vendor"><FeaturePage role="vendor" title="Pricing Intelligence" description="Control vendor pricing, seller economics and marketplace-ready margins." /></ProtectedRoute>} />
+      <Route path="/vendor/shipping" element={<ProtectedRoute role="vendor"><ShipmentCenter role="vendor"/></ProtectedRoute>} />
+      <Route path="/vendor/health" element={<ProtectedRoute role="vendor"><FeaturePage role="vendor" title="Business Health" description="Monitor fulfillment, inventory, seller service and operating readiness from one scorecard." /></ProtectedRoute>} />
+      <Route path="/vendor/pricing" element={<ProtectedRoute role="vendor"><FeaturePage role="vendor" title="Pricing Intelligence" description="Control vendor pricing, seller economics and marketplace-ready margins." /></ProtectedRoute>} />
 
       <Route path="/seller/profit" element={<ProtectedRoute role="seller"><ProfitCalculator/></ProtectedRoute>} />
       <Route path="/seller/kyc" element={<ProtectedRoute role="seller"><KycCenter role="seller"/></ProtectedRoute>} />
