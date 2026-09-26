@@ -3,11 +3,11 @@ import { useEffect,useState } from "react";
 import { useAuth } from "../context/AuthContext";
 
 const sellerGroups=[
- {title:"Command Center",items:[["⌂","Home","/seller"],["◒","Analytics","/seller/analytics"],["▤","Reports","/seller/reports"],["◉","Store Health","/seller/health"],["✦","AI Insights","/seller/insights"]]},
- {title:"Sell",items:[["▦","Product Marketplace","/seller/products"],["₹","Profit Calculator","/seller/profit"],["✦","Winning Products","/seller/winning-ads"],["⊞","My Catalog","/seller/catalog"]]},
- {title:"Orders",items:[["▤","Orders","/seller/orders"],["◇","Shipments","/seller/shipping"],["◎","Customers","/seller/customers"],["▱","NDR","/seller/ndr"],["⌁","RTO Intelligence","/seller/rto-intelligence"]]},
+ {title:"Command Center",items:[["⌂","Home","/seller"],["◒","Analytics","/seller/analytics"],["▤","Reports","/seller/reports"]]},
+ {title:"Sell",items:[["▦","Product Marketplace","/seller/products"],["⊞","My Catalog","/seller/catalog"]]},
+ {title:"Orders",items:[["▤","Orders","/seller/orders"],["◇","Shipments","/seller/shipping"],["▱","NDR","/seller/ndr"],["⌁","RTO Intelligence","/seller/rto-intelligence"]]},
  {title:"Money",items:[["₹","Wallet","/seller/wallet"],["◈","Settlements","/seller/billing"]]},
- {title:"Channels & Account",items:[["▣","Shopify Stores","/seller/stores"],["✓","KYC","/seller/kyc"],["⚙","Settings","/seller/settings"]]}
+ {title:"Channels & Account",items:[["▣","Shopify Stores","/seller/stores"],["⚙","Settings","/seller/settings"]]}
 ];
 const vendorGroups=[
  {title:"Command Center",items:[["⌂","Overview","/vendor"],["◒","Reports","/vendor/reports"],["◉","Business Health","/vendor/health"]]},
