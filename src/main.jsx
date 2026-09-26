@@ -28,6 +28,7 @@ import {
   VendorExceptions
 } from "./pages/Vendor";
 import {SellerOrders as LiveSellerOrders, VendorOrders as LiveVendorOrders, ShipmentCenter, NdrCenter, RtoCenter, RemittanceCenter, SellerAnalytics} from "./pages/Operations";
+import SuperAdmin from "./pages/SuperAdmin";
 import "./style.css";
 import "./modern.css";
 
@@ -35,6 +36,7 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/control/*" element={<ProtectedRoute role="admin"><SuperAdmin /></ProtectedRoute>} />
 
       <Route
         path="/seller"
