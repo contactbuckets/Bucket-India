@@ -23,7 +23,8 @@ function CatalogSelect({icon,value,onChange,options}){const label=options.find(x
 export function SellerCatalog(){
   const {session}=useAuth();
   const {data,load}=useSellerData();
-  const [search,setSearch]=useState(""),[sort,setSort]=useState("newest"),[out,setOut]=useState(false),[active,setActive]=useState("all"),[store,setStore]=useState("all"),[busy,setBusy]=useState(""),[msg,setMsg]=useState("");\n  useEffect(()=>{const close=e=>{document.querySelectorAll(".catalog-select[open]").forEach(d=>{if(!d.contains(e.target))d.removeAttribute("open")})};const esc=e=>{if(e.key==="Escape")document.querySelectorAll(".catalog-select[open]").forEach(d=>d.removeAttribute("open"))};document.addEventListener("mousedown",close);document.addEventListener("keydown",esc);return()=>{document.removeEventListener("mousedown",close);document.removeEventListener("keydown",esc)}},[]);
+  const [search,setSearch]=useState(""),[sort,setSort]=useState("newest"),[out,setOut]=useState(false),[active,setActive]=useState("all"),[store,setStore]=useState("all"),[busy,setBusy]=useState(""),[msg,setMsg]=useState("");
+  useEffect(()=>{const close=e=>{document.querySelectorAll(".catalog-select[open]").forEach(d=>{if(!d.contains(e.target))d.removeAttribute("open")})};const esc=e=>{if(e.key==="Escape")document.querySelectorAll(".catalog-select[open]").forEach(d=>d.removeAttribute("open"))};document.addEventListener("mousedown",close);document.addEventListener("keydown",esc);return()=>{document.removeEventListener("mousedown",close);document.removeEventListener("keydown",esc)}},[]);
   const pushed=useMemo(()=>data.listings.filter(l=>!!l.shopify_product_id),[data.listings]);
   const rows=useMemo(()=>pushed.map(l=>{
     const p=data.products.find(x=>x.id===l.product_id)||{};
