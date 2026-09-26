@@ -184,3 +184,22 @@ html[data-theme="dark"] .economics-total{background:#1d2030}
 .active-switch{display:flex;align-items:center;gap:5px;border:0;background:transparent;color:#16845a;font-size:9px;font-weight:800;cursor:pointer;padding:0}.active-switch:not(.on){color:var(--muted)}.active-switch.on svg{color:#16845a}
 .catalog-edit{display:inline-flex;align-items:center;gap:6px;border:1px solid #d9d2ff;background:#f6f4ff;color:#5e46d4;padding:8px 10px;border-radius:9px;font-size:9px;font-weight:800;text-decoration:none;white-space:nowrap}.catalog-edit:hover{background:#ece8ff;transform:translateY(-1px)}
 @media(max-width:900px){.catalog-hero{align-items:flex-start;flex-direction:column}.catalog-hero-stat{min-width:130px}.catalog-toolbar{display:grid;grid-template-columns:1fr 1fr}.catalog-search{grid-column:1/-1}.catalog-toggle{justify-content:center}}
+
+/* Marketplace fixes v5 */
+.product-detail-modal{height:min(760px,92vh);max-height:min(760px,92vh);overflow:hidden}
+.detail-gallery{min-height:0;height:auto;overflow:hidden}
+.detail-copy{height:100%;min-height:0;overflow:hidden}
+.detail-copy-scroll{flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.detail-footer{flex:0 0 auto}
+.catalog-status{display:inline-flex;align-items:center;padding:5px 8px;border-radius:999px;font-size:9px;font-weight:800;letter-spacing:.02em;border:1px solid var(--line);white-space:nowrap}
+.catalog-status.live{color:#137a52;background:#ecfdf3;border-color:#b7ebcc}
+.catalog-status.paused{color:#9a6700;background:#fff8e6;border-color:#f2d58b}
+.catalog-status-note{display:block;color:#c44242;font-size:8px;margin-top:4px}
+html[data-theme="dark"] .catalog-status.live{color:#6ee7b7;background:#10291f;border-color:#1d5b45}
+html[data-theme="dark"] .catalog-status.paused{color:#f5c86b;background:#2a2414;border-color:#5c4a20}
+@media(max-width:900px){
+ .product-detail-modal{height:94vh;max-height:94vh}
+ .detail-gallery{flex:0 0 auto}
+ .detail-copy{height:auto;flex:1 1 auto;min-height:0;max-height:none}
+ .detail-copy-scroll{min-height:0;overflow-y:auto}
+}
