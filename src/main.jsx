@@ -5,6 +5,7 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import SellerModern from "./pages/SellerModern";
+import SellerMarketplace from "./pages/SellerMarketplace";
 import {SellerCommandCenter,VendorCommandCenter,ProfitCalculator,KycCenter,WalletCenter,ReportsCenter,VendorImport,FeaturePage,CustomerCenter,StoreHealth} from "./pages/GrowthOS";
 import {
   SellerHome,
@@ -42,7 +43,7 @@ function App() {
         path="/seller/products"
         element={
           <ProtectedRoute role="seller">
-            <SellerProducts />
+            <SellerMarketplace />
           </ProtectedRoute>
         }
       />
