@@ -23,9 +23,9 @@ function CatalogSelect({icon,value,onChange,options}){const label=options.find(x
 export function SellerCatalog(){
   const {session}=useAuth();
   const {data,load}=useSellerData();
-  const [search,setSearch]=useState(""),[sort,setSort]=useState("newest"),[out,setOut]=useState(false),[active,setActive]=useState("all"),[store,setStore]=useState("all"),[busy,setBusy]=useState(""),[msg,setMsg]=useState("");
+  const [syncing,setSyncing]=useState(false),[syncMsg,setSyncMsg]=useState("");\n  async function syncShopify(){setSyncing(true);setSyncMsg("");const {data:r,error}=await supabase.functions.invoke("shopify-sync-catalog",{body:{}});setSyncing(false);if(error||r?.ok===false)setSyncMsg(r?.error||error?.message||"Shopify sync failed.");else{setSyncMsg(r?.deleted?`${r.deleted} product(s) deleted in Shopify were marked as deleted.`:"Shopify catalog is up to date.");load()}}\n  const [search,setSearch,setSort]=useState("newest"),[out,setOut]=useState(false),[active,setActive]=useState("all"),[store,setStore]=useState("all"),[busy,setBusy]=useState(""),[msg,setMsg]=useState("");
   useEffect(()=>{const close=e=>{document.querySelectorAll(".catalog-select[open]").forEach(d=>{if(!d.contains(e.target))d.removeAttribute("open")})};const esc=e=>{if(e.key==="Escape")document.querySelectorAll(".catalog-select[open]").forEach(d=>d.removeAttribute("open"))};document.addEventListener("mousedown",close);document.addEventListener("keydown",esc);return()=>{document.removeEventListener("mousedown",close);document.removeEventListener("keydown",esc)}},[]);
-  const pushed=useMemo(()=>data.listings.filter(l=>!!l.shopify_product_id),[data.listings]);
+  const pushed=useMemo(()=>data.listings.filter(l=>!!l.shopify_product_id&&l.shopify_sync_status!=="deleted"&&l.status!=="shopify_deleted"),[data.listings]);
   const rows=useMemo(()=>pushed.map(l=>{
     const p=data.products.find(x=>x.id===l.product_id)||{};
     const sales=data.orders.filter(o=>o.listing_id===l.id).reduce((n,o)=>n+Number(o.quantity||1),0);
@@ -39,7 +39,7 @@ export function SellerCatalog(){
   function shopifyAdminUrl(r){if(r.shopify_product_url)return r.shopify_product_url;const st=data.stores.find(x=>x.id===r.store_id);if(!st?.shop_domain||!r.shopify_product_id)return "#";return "https://"+st.shop_domain+"/admin/products/"+r.shopify_product_id}
   return <AppShell role="seller" title="My Catalog">
     <div className="catalog-page">
-      <section className="catalog-hero"><div><span className="section-kicker">SHOPIFY CATALOG</span><h2>Products you're actually selling.</h2><p>Manage products already pushed to your Shopify stores, pricing, inventory and selling status from one place.</p></div><div className="catalog-hero-stat"><ShoppingBagIcon size={20}/><b>{pushed.length}</b><span>Shopify products</span></div></section>
+      <section className="catalog-hero"><div><span className="section-kicker">SHOPIFY CATALOG</span><h2>Products you're actually selling.</h2><p>Manage products already pushed to your Shopify stores, pricing, inventory and selling status from one place.</p></div><div className="catalog-hero-stat"><ShoppingBagIcon size={20}/><b>{pushed.length}</b><span>Shopify products</span><button className="btn secondary" onClick={syncShopify} disabled={syncing}>{syncing?"Syncing…":"Sync Shopify"}</button></div></section>{syncMsg&&<div className="alert success">{syncMsg}</div>}
       <section className="panel catalog-panel">
         <div className="catalog-toolbar">
           <div className="catalog-search"><MagnifyingGlassIcon size={18}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by product name, SKU or store"/></div>
