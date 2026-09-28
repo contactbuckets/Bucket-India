@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useState} from "react";
-import {NavLink} from "react-router-dom";
+import {NavLink,useNavigate} from "react-router-dom";
 import AppShell,{Stat,Empty} from "../components/AppShell";
 import {useAuth} from "../context/AuthContext";
 import {supabase} from "../lib/supabase";
