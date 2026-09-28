@@ -122,6 +122,9 @@ function App() {
       <Route path="/vendor/health" element={<ProtectedRoute role="vendor"><FeaturePage role="vendor" title="Business Health" description="Monitor fulfillment, inventory, seller service and operating readiness from one scorecard." /></ProtectedRoute>} />
       <Route path="/vendor/pricing" element={<ProtectedRoute role="vendor"><FeaturePage role="vendor" title="Pricing Intelligence" description="Control vendor pricing, seller economics and marketplace-ready margins." /></ProtectedRoute>} />
 
+      <Route path="/onboarding/kyc/seller" element={<ProtectedRoute role="seller"><KycCenter role="seller" onboarding/></ProtectedRoute>} />
+      <Route path="/onboarding/kyc/vendor" element={<ProtectedRoute role="vendor"><KycCenter role="vendor" onboarding/></ProtectedRoute>} />
+
       <Route path="/seller/profit" element={<ProtectedRoute role="seller"><ProfitCalculator/></ProtectedRoute>} />
       <Route path="/seller/kyc" element={<ProtectedRoute role="seller"><KycCenter role="seller"/></ProtectedRoute>} />
       <Route path="/seller/wallet" element={<ProtectedRoute role="seller"><WalletCenter role="seller"/></ProtectedRoute>} />
