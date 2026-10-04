@@ -1,22 +1,18 @@
 insert into storage.buckets (id,name,public)
-values ('img','img',false)
-on conflict (id) do update set public=false;
+values ('img','img',true)
+on conflict (id) do update set public=true;
 
 alter table public."Bucket img"
   add column if not exists user_id uuid references auth.users(id) on delete cascade,
   add column if not exists kyc_profile_id uuid references public.kyc_profiles(id) on delete cascade,
   add column if not exists document_type text,
   add column if not exists storage_path text,
-  add column if not exists proof_image_url text,
-  add column if not exists proof_storage_path text;
+  add column if not exists proof_image_url text;
 
 alter table public.kyc_profiles
   add column if not exists proof_image_url text,
   add column if not exists pan_image_url text,
-  add column if not exists bank_proof_image_url text,
-  add column if not exists proof_storage_path text,
-  add column if not exists pan_storage_path text,
-  add column if not exists bank_proof_storage_path text;
+  add column if not exists bank_proof_image_url text;
 
 alter table public."Bucket img" enable row level security;
 
