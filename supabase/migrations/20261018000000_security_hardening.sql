@@ -68,7 +68,7 @@ create or replace function public.guard_kyc_owner_updates()
 returns trigger
 language plpgsql
 set search_path = public, auth
-as $
+as $$
 begin
   -- Trusted SECURITY DEFINER RPCs execute as the function owner; direct API calls do not.
   if current_user = 'postgres' or public.is_admin() then
