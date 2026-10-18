@@ -144,6 +144,8 @@ grant execute on function public.admin_set_kyc_status(uuid, text) to authenticat
 -- Orders: anonymous access removed; keep existing admin capabilities but enforce role-specific
 -- write allowlists in the database so direct API calls cannot alter ownership or financial values.
 drop policy if exists orders_seller_delete on public.orders;
+-- Order creation is server-originated (Shopify/webhook/service role) or admin-only; never trust client-supplied amounts/vendor ownership.
+drop policy if exists orders_seller_insert on public.orders;
 
 create or replace function public.guard_order_updates()
 returns trigger
