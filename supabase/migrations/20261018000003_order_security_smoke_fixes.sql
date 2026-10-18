@@ -2,6 +2,28 @@
 -- Row-level policies and guard_order_updates still enforce per-role ownership/status rules.
 
 revoke insert, update, delete, truncate, references, trigger on table public.orders from authenticated;
+
+-- Remove any old column-level UPDATE grants on fields that must remain server-owned.
+do $$
+declare
+  c record;
+begin
+  for c in
+    select column_name
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'orders'
+      and column_name not in (
+        'customer_name','customer_phone','shipping_address','status','confirmed_at',
+        'cancelled_at','error_message','updated_at','awb','courier','packed_at',
+        'shipped_at','delivered_at','rto_at','last_event_at'
+      )
+  loop
+    execute format('revoke update (%I) on table public.orders from authenticated', c.column_name);
+  end loop;
+end;
+$$;
+
 grant select on table public.orders to authenticated;
 grant update (
   customer_name,
