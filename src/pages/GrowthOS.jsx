@@ -227,7 +227,7 @@ export function KycCenter({role="seller",onboarding=false}){
  const [f,setF]=useState({entity_type:role==="vendor"?"business":"individual",legal_name:"",business_name:"",gstin:"",phone:"",address:"",pincode:""});
  const [row,setRow]=useState(null),[msg,setMsg]=useState(""),[busy,setBusy]=useState(false);
  const [docs,setDocs]=useState({pan:null,bank_proof:null});
- const load=async()=>{if(!session?.user?.id)return;const {data,error}=await supabase.from("kyc_profiles").select("*").eq("user_id",session.user.id).maybeSingle();if(error){setMsg(error.message);return}if(data){setRow(data);setF(v=>({...v,...data}))}else{const {data:created,error:ce}=await supabase.from("kyc_profiles").insert({user_id:session.user.id,entity_type:role==="vendor"?"business":"individual",status:"pending",completion:0}).select().single();if(!ce){setRow(created);setF(v=>({...v,...created}))}}};
+ const load=async()=>{if(!session?.user?.id)return;const {data,error}=await supabase.from("kyc_profiles").select("*").eq("user_id",session.user.id).maybeSingle();if(error){setMsg(error.message);return}if(data){setRow(data);setF(v=>({...v,...data}))}else{const {data:created,error:ce}=await supabase.from("kyc_profiles").insert({user_id:session.user.id,entity_type:role==="vendor"?"business":"individual",completion:0}).select().single();if(!ce){setRow(created);setF(v=>({...v,...created}))}}};
  useEffect(()=>{load()},[session?.user?.id]);
  const completion=Math.round(row?.completion||0),approved=row?.status==="verified",customerStatus=approved?"Verified":"Pending";
  async function finishOnboarding(){setBusy(true);const {error}=await supabase.auth.updateUser({data:{kyc_onboarding_seen:true}});if(error){setMsg(error.message);setBusy(false);return}nav(role==="vendor"?"/vendor":"/seller");setBusy(false)}
@@ -251,14 +251,15 @@ export function KycCenter({role="seller",onboarding=false}){
  }
  async function save(e){e.preventDefault();if(!session?.user?.id)return;setBusy(true);setMsg("");
   const completion=Math.min(100,Math.round([f.legal_name,f.business_name,f.gstin,f.phone,f.address,f.pincode].filter(Boolean).length/6*100));
-  const payload={entity_type:f.entity_type||"individual",legal_name:f.legal_name||null,business_name:f.business_name||null,gstin:f.gstin||null,phone:f.phone||null,address:f.address||null,pincode:f.pincode||null,completion,status:"submitted",updated_at:new Date().toISOString()};
+  const payload={entity_type:f.entity_type||"individual",legal_name:f.legal_name||null,business_name:f.business_name||null,gstin:f.gstin||null,phone:f.phone||null,address:f.address||null,pincode:f.pincode||null,completion,updated_at:new Date().toISOString()};
   const {data,error}=row?await supabase.from("kyc_profiles").update(payload).eq("user_id",session.user.id).select().single():await supabase.from("kyc_profiles").insert({...payload,user_id:session.user.id}).select().single();
   if(error){setMsg(error.message);setBusy(false);return}
   setRow(data);setF(v=>({...v,...data}));
   let uploadError=false;
   for(const [type,file] of Object.entries(docs)){if(file){const url=await uploadDoc(file,type);if(!url)uploadError=true}}
   setDocs({pan:null,bank_proof:null});
-  setMsg(uploadError?"KYC details saved, but one or more documents failed to upload.":"KYC submitted. Your status will remain Pending until the Super Admin approves it.");
+  if(!uploadError){const {error:submitError}=await supabase.rpc("submit_kyc_profile");if(submitError){setMsg("KYC details saved, but submission failed: "+submitError.message);setBusy(false);return}const {data:submitted}=await supabase.from("kyc_profiles").select("*").eq("user_id",session.user.id).single();if(submitted){setRow(submitted);setF(v=>({...v,...submitted}))}}
+  setMsg(uploadError?"KYC details saved, but one or more documents failed to upload. Please retry the failed document(s) before submitting.":"KYC submitted. Your status will remain Pending until the Super Admin approves it.");
   await supabase.auth.updateUser({data:{kyc_onboarding_seen:true}});
   setBusy(false)
  }
