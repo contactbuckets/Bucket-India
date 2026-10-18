@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
       if (orderId) {
         const { data: existing, error: existingError } = await admin
           .from("orders")
-          .select("id,status,awb,courier,error_message")
+          .select("id,status,awb,courier,error_message,cancelled_at")
           .eq("seller_id", store.seller_id)
           .eq("external_order_id", orderId)
           .maybeSingle();
@@ -182,6 +182,7 @@ Deno.serve(async (req) => {
                 .select("id,seller_id,selling_price,product_id")
                 .eq("store_id", store.id)
                 .eq("shopify_variant_id", variantId)
+                .eq("seller_id", store.seller_id)
                 .maybeSingle();
               if (error) throw error;
               listing = data;
@@ -260,7 +261,7 @@ Deno.serve(async (req) => {
             line_items: mappedLines,
             last_event_at: now,
             updated_at: now,
-            cancelled_at: null,
+            cancelled_at: status === "cancelled" ? (existing?.cancelled_at || now) : null,
             error_message: reviewReason,
           };
 
