@@ -169,6 +169,7 @@ Deno.serve(async (req) => {
             unit_price: number;
             vendor_unit_cost: number;
             vendor_amount: number;
+            line_total: number;
           }> = [];
 
           for (const line of sourceLines) {
