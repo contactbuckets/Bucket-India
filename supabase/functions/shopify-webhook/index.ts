@@ -32,7 +32,7 @@ const json = (body: unknown, status = 200) =>
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return json({ ok: true });
 
-  let eventId = req.headers.get("x-shopify-event-id") || crypto.randomUUID();
+  const eventId = req.headers.get("x-shopify-event-id") || crypto.randomUUID();
   const shop = (req.headers.get("x-shopify-shop-domain") || "").toLowerCase().trim();
   const topic = (req.headers.get("x-shopify-topic") || "").toLowerCase().trim();
   const hmac = req.headers.get("x-shopify-hmac-sha256") || "";
@@ -106,58 +106,145 @@ Deno.serve(async (req) => {
     }
 
     if (topic === "inventory_levels/update") {
-      // Inventory is intentionally treated as Shopify-owned stock. Bucket India's vendor
-      // product stock remains the supplier/source-of-truth and is not overwritten here.
-      // The event is retained for audit/reconciliation.
+      // Shopify-owned inventory changes are retained for audit/reconciliation.
+      // Bucket India's vendor product stock remains the supplier source of truth.
     }
 
     if (topic.startsWith("orders/") || topic === "fulfillments/update") {
-      const orderId = payload.id != null ? String(payload.id) : null;
+      // Shopify fulfillment payloads use order_id; payload.id is the fulfillment ID.
+      const isFulfillmentEvent = topic === "fulfillments/update";
+      const orderIdValue = isFulfillmentEvent ? payload.order_id : payload.id;
+      const orderId = orderIdValue != null ? String(orderIdValue) : null;
+
       if (orderId) {
         const { data: existing, error: existingError } = await admin
           .from("orders")
-          .select("id,status")
+          .select("id,status,awb,courier,error_message,cancelled_at")
           .eq("seller_id", store.seller_id)
           .eq("external_order_id", orderId)
           .maybeSingle();
         if (existingError) throw existingError;
 
-        if (topic === "orders/cancelled") {
+        if (isFulfillmentEvent) {
           if (existing) {
+            const now = new Date().toISOString();
+            const fulfillmentStatus = String(payload.status || "").toLowerCase();
+            const patch: Record<string, unknown> = {
+              last_event_at: now,
+              updated_at: now,
+              awb: payload.tracking_number || existing.awb,
+              courier: payload.tracking_company || existing.courier,
+            };
+            if (fulfillmentStatus === "success" && !["cancelled", "rto", "delivered"].includes(existing.status)) {
+              patch.status = "shipped";
+              patch.error_message = null;
+            } else if (["error", "failure"].includes(fulfillmentStatus)) {
+              patch.error_message = "Shopify reported a fulfillment error.";
+            }
+            const { error } = await admin.from("orders").update(patch).eq("id", existing.id);
+            if (error) throw error;
+          } else {
+            await mark("ignored", "Fulfillment event arrived before a matching Bucket India order existed.");
+            return json({ ok: true, ignored: true });
+          }
+        } else if (topic === "orders/cancelled") {
+          if (existing) {
+            const now = new Date().toISOString();
             const { error } = await admin.from("orders").update({
               status: "cancelled",
-              cancelled_at: new Date().toISOString(),
-              last_event_at: new Date().toISOString(),
+              cancelled_at: now,
+              last_event_at: now,
+              updated_at: now,
+              error_message: null,
             }).eq("id", existing.id);
             if (error) throw error;
           }
         } else {
-          const line = Array.isArray(payload.line_items) ? payload.line_items[0] : null;
-          const variantId = line?.variant_id != null ? String(line.variant_id) : null;
+          const sourceLines = Array.isArray(payload.line_items) ? payload.line_items : [];
+          const mappedLines: Array<Record<string, unknown> & {
+            listing_id: string | null;
+            product_id: string | null;
+            vendor_id: string | null;
+            quantity: number;
+            unit_price: number;
+            vendor_unit_cost: number;
+            vendor_amount: number;
+            line_total: number;
+          }> = [];
 
-          let listing: any = null;
-          if (variantId) {
-            const { data, error } = await admin.from("listings")
-              .select("id,seller_id,selling_price,product_id")
-              .eq("store_id", store.id)
-              .eq("shopify_variant_id", variantId)
-              .maybeSingle();
-            if (error) throw error;
-            listing = data;
+          for (const line of sourceLines) {
+            const variantId = line?.variant_id != null ? String(line.variant_id) : null;
+            let listing: any = null;
+            let product: any = null;
+
+            if (variantId) {
+              const { data, error } = await admin.from("listings")
+                .select("id,seller_id,selling_price,product_id")
+                .eq("store_id", store.id)
+                .eq("shopify_variant_id", variantId)
+                .eq("seller_id", store.seller_id)
+                .maybeSingle();
+              if (error) throw error;
+              listing = data;
+            }
+
+            if (listing?.product_id) {
+              const { data, error } = await admin.from("products")
+                .select("id,title,sku,vendor_id,cost_price")
+                .eq("id", listing.product_id)
+                .maybeSingle();
+              if (error) throw error;
+              product = data;
+            }
+
+            const quantity = Math.max(0, Number(line?.quantity || 0));
+            const unitPrice = Number(line?.price || 0);
+            const vendorUnitCost = Number(product?.cost_price || 0);
+            mappedLines.push({
+              shopify_line_item_id: line?.id != null ? String(line.id) : null,
+              title: String(line?.title || product?.title || "Shopify line item"),
+              sku: line?.sku || product?.sku || null,
+              variant_id: variantId,
+              listing_id: listing?.id ?? null,
+              product_id: product?.id ?? listing?.product_id ?? null,
+              vendor_id: product?.vendor_id ?? null,
+              quantity,
+              unit_price: unitPrice,
+              line_total: unitPrice * quantity,
+              vendor_unit_cost: vendorUnitCost,
+              vendor_amount: vendorUnitCost * quantity,
+            });
           }
 
-          const quantity = Number(line?.quantity || 1);
-          const amount = Number(payload.total_price || line?.price || 0);
-          const payment = Array.isArray(payload.payment_gateway_names)
-            && payload.payment_gateway_names.some((x: unknown) => /cash|cod/i.test(String(x))) ? "cod" : "prepaid";
+          const allMapped = sourceLines.length > 0 && mappedLines.length === sourceLines.length
+            && mappedLines.every(line => Boolean(line.listing_id && line.product_id && line.vendor_id));
+          const vendorIds = [...new Set(mappedLines.map(line => line.vendor_id).filter(Boolean))] as string[];
+          const singleVendorOrder = allMapped && vendorIds.length === 1;
+          let reviewReason: string | null = null;
+          if (!sourceLines.length) {
+            reviewReason = "Shopify order contains no line items; manual review required.";
+          } else if (!allMapped) {
+            reviewReason = "One or more Shopify line items could not be matched to a Bucket India listing; manual review required.";
+          } else if (vendorIds.length > 1) {
+            reviewReason = "This Shopify order contains products from multiple vendors; split fulfillment is required before dispatch.";
+          }
 
-          let status = "pending";
-          if (topic === "orders/fulfilled" || payload.fulfillment_status === "fulfilled" || topic === "fulfillments/update") status = "shipped";
+          const now = new Date().toISOString();
+          const quantity = mappedLines.reduce((sum, line) => sum + line.quantity, 0) || 1;
+          const lineTotal = mappedLines.reduce((sum, line) => sum + line.line_total, 0);
+          const amount = Number(payload.total_price ?? lineTotal);
+          const vendorAmount = singleVendorOrder
+            ? mappedLines.reduce((sum, line) => sum + line.vendor_amount, 0)
+            : 0;
+
+          let status = existing?.status || "pending";
+          if (topic === "orders/fulfilled" || payload.fulfillment_status === "fulfilled") status = "shipped";
           else if (topic === "orders/edited") status = existing?.status || "pending";
 
           const data = {
             seller_id: store.seller_id,
-            listing_id: listing?.id ?? null,
+            vendor_id: singleVendorOrder ? vendorIds[0] : null,
+            listing_id: mappedLines.find(line => line.listing_id)?.listing_id ?? null,
             external_order_id: orderId,
             customer_name: payload.customer?.first_name
               ? [payload.customer.first_name, payload.customer.last_name].filter(Boolean).join(" ")
@@ -167,11 +254,15 @@ Deno.serve(async (req) => {
             quantity,
             amount,
             status,
-            payment_method: payment,
-            vendor_amount: listing ? Number(listing.selling_price || 0) * quantity : 0,
-            seller_margin: listing ? Math.max(0, amount - Number(listing.selling_price || 0) * quantity) : 0,
-            last_event_at: new Date().toISOString(),
-            cancelled_at: topic === "orders/cancelled" ? new Date().toISOString() : null,
+            payment_method: Array.isArray(payload.payment_gateway_names)
+              && payload.payment_gateway_names.some((x: unknown) => /cash|cod/i.test(String(x))) ? "cod" : "prepaid",
+            vendor_amount: vendorAmount,
+            seller_margin: singleVendorOrder ? amount - vendorAmount : 0,
+            line_items: mappedLines,
+            last_event_at: now,
+            updated_at: now,
+            cancelled_at: status === "cancelled" ? (existing?.cancelled_at || now) : null,
+            error_message: reviewReason,
           };
 
           if (existing) {
@@ -182,6 +273,9 @@ Deno.serve(async (req) => {
             if (error) throw error;
           }
         }
+      } else {
+        await mark("ignored", "Webhook payload did not contain a Shopify order ID.");
+        return json({ ok: true, ignored: true });
       }
     }
 
