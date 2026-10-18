@@ -1,7 +1,6 @@
 -- Bucket India security hardening: profile roles, KYC approvals, and order integrity.
 -- Apply only after reviewing in staging. Auth leaked-password protection is configured in Supabase Auth settings, not SQL.
 
-begin;
 
 -- Remove the accidental public/anon access observed on these private account/order tables.
 revoke all privileges on table public.profiles from anon;
@@ -216,4 +215,3 @@ grant execute on function public.is_admin() to authenticated;
 revoke execute on function public.current_vendor_id() from public, anon;
 grant execute on function public.current_vendor_id() to authenticated;
 
-commit;
